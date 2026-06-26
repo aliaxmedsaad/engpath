@@ -388,7 +388,7 @@ async function load(){
     const w=localStorage.getItem('pt5_widgets');
     dashWidgets=w?JSON.parse(w):[...DEFAULT_WIDGETS];
     // Try to load from Supabase
-    const {data,error}=await sb.from('projects').select('data').eq('user_id',USER_ID).single();
+    const {data,error}=await sb.from('projects').select('data').eq('user_id',USER_ID).maybeSingle();
     if(data&&data.data){
       const saved=data.data;
       projs=saved.projs||[];
