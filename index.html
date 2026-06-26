@@ -851,6 +851,7 @@ function openModal(id){
   document.getElementById('modal-title').textContent=id?'Edit project':'Add project';
   document.getElementById('eid').value=id||'';
   const p=id?projs.find(x=>x.id===id):null;
+  document.getElementById('f-name').value=p?(p.name||''):'';
   ['other','tech','per','chal'].forEach(f=>{document.getElementById('f-'+f).value=p?(p[f]||''):'';}); 
   document.getElementById('f-rams').value=p?(p.rams||''):'';
   modalTags=p?[...(p.tags||[])]:[];
