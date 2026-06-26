@@ -200,6 +200,25 @@ td:first-child{color:var(--t1);font-weight:500}
 .ai-note i{font-size:13px;color:var(--blue)}
 .toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(6px);background:var(--t1);color:var(--surface);padding:.5rem 1rem;border-radius:20px;font-size:12.5px;opacity:0;pointer-events:none;transition:all .18s;z-index:200;white-space:nowrap}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Auth screen */
+.auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:1rem}
+.auth-box{background:var(--surface);border:.5px solid var(--bm);border-radius:12px;width:100%;max-width:380px;overflow:hidden}
+.auth-head{padding:1.5rem 1.5rem 1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;gap:10px}
+.auth-logo{width:32px;height:32px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.auth-logo i{color:#fff;font-size:17px}
+.auth-title{font-size:15px;font-weight:500}
+.auth-sub{font-size:12px;color:var(--t3)}
+.auth-body{padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.85rem}
+.auth-field label{display:block;font-size:10.5px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.auth-field input{width:100%;padding:.5rem .7rem;border:.5px solid var(--bm);border-radius:var(--r-sm);font-size:13px;font-family:inherit;color:var(--t1);background:var(--surface);transition:border-color .15s}
+.auth-field input:focus{outline:none;border-color:var(--blue)}
+.auth-btn{width:100%;padding:.6rem;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}
+.auth-err{font-size:12px;color:var(--coral);background:var(--coral-bg);padding:.45rem .7rem;border-radius:var(--r-sm);display:none}
+.auth-err.on{display:block}
+.auth-switch{font-size:12px;color:var(--t3);text-align:center}
+.auth-switch button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;font-family:inherit}
+.auth-foot{padding:.75rem 1.5rem;border-top:.5px solid var(--b)}
 .sh{font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.65rem}
 /* Dashboard tag summary */
 .tag-summary{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:1.5rem}
@@ -235,6 +254,7 @@ td:first-child{color:var(--t1);font-weight:500}
         <button class="btn" style="flex:1;justify-content:center" onclick="document.getElementById('import-file').click()"><i class="ti ti-download" aria-hidden="true"></i> Import</button>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importFile(event)">
+      <button class="btn" style="width:100%;justify-content:center;margin-top:6px;color:var(--coral);border-color:rgba(153,60,29,.3)" onclick="signOut()"><i class="ti ti-logout" aria-hidden="true"></i> Sign out</button>
     </div>
   </aside>
 
@@ -286,6 +306,25 @@ td:first-child{color:var(--t1);font-weight:500}
       <div class="ev-list" id="ev-list"></div>
     </div>
   </main>
+</div>
+
+<!-- Auth Screen -->
+<div class="auth-screen" id="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-head">
+      <div class="auth-logo"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>
+      <div><div class="auth-title">EngPath</div><div class="auth-sub">Engineering portfolio tracker</div></div>
+    </div>
+    <div class="auth-body">
+      <div id="auth-err" class="auth-err"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+      <button class="auth-btn" id="auth-btn" onclick="authSubmit()">Sign in</button>
+    </div>
+    <div class="auth-foot">
+      <div class="auth-switch" id="auth-switch">Don't have an account? <button onclick="toggleAuthMode()">Sign up</button></div>
+    </div>
+  </div>
 </div>
 
 <!-- Project Modal -->
@@ -375,20 +414,69 @@ const SUPA_URL='https://avmxfiwcgmhxrzdpvmnk.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bXhmaXdjZ21oeHJ6ZHB2bW5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODcyNDcsImV4cCI6MjA5ODA2MzI0N30.5vU8cqoFn9P6gFeDxsCEVQzumXbalZ6X7LZbvoYF6GA';
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-// Get or create a stable user ID stored in localStorage
-function getUserId(){
-  let uid=localStorage.getItem('engpath_uid');
-  if(!uid){uid=crypto.randomUUID();localStorage.setItem('engpath_uid',uid);}
-  return uid;
+let currentUser=null;
+
+/* ── Auth UI ── */
+let authMode='signin';
+function toggleAuthMode(){
+  authMode=authMode==='signin'?'signup':'signin';
+  document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';
+  document.getElementById('auth-switch').innerHTML=authMode==='signin'?
+    'Don't have an account? <button onclick="toggleAuthMode()">Sign up</button>':
+    'Already have an account? <button onclick="toggleAuthMode()">Sign in</button>';
+  document.getElementById('auth-err').classList.remove('on');
 }
-const USER_ID=getUserId();
+async function authSubmit(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const errEl=document.getElementById('auth-err');
+  errEl.classList.remove('on');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.classList.add('on');return;}
+  document.getElementById('auth-btn').textContent='Please wait…';
+  try{
+    let result;
+    if(authMode==='signin'){
+      result=await sb.auth.signInWithPassword({email,password:pass});
+    } else {
+      result=await sb.auth.signUp({email,password:pass});
+    }
+    if(result.error){errEl.textContent=result.error.message;errEl.classList.add('on');document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';return;}
+    if(authMode==='signup'&&result.data?.user&&!result.data.session){
+      errEl.style.color='var(--teal)';errEl.style.background='var(--teal-bg)';
+      errEl.textContent='Check your email to confirm your account, then sign in.';
+      errEl.classList.add('on');
+      document.getElementById('auth-btn').textContent='Sign in';
+      authMode='signin';
+      return;
+    }
+    // Signed in — load app
+    currentUser=result.data.user;
+    showApp();
+  }catch(e){errEl.textContent='Something went wrong. Please try again.';errEl.classList.add('on');document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';}
+}
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.querySelector('.app').style.display='flex';
+  load();
+}
+function showAuth(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.querySelector('.app').style.display='none';
+}
+async function signOut(){
+  await sb.auth.signOut();
+  currentUser=null;
+  projs=[];
+  showAuth();
+  toast('Signed out');
+}
 
 async function load(){
   try{
     const w=localStorage.getItem('pt5_widgets');
     dashWidgets=w?JSON.parse(w):[...DEFAULT_WIDGETS];
     // Try to load from Supabase
-    const {data,error}=await sb.from('projects').select('data').eq('user_id',USER_ID).maybeSingle();
+    const {data,error}=await sb.from('projects').select('data').eq('user_id',currentUser.id).maybeSingle();
     if(data&&data.data){
       const saved=data.data;
       projs=saved.projs||[];
@@ -412,7 +500,7 @@ async function sv(){
   try{
     localStorage.setItem('pt5_widgets',JSON.stringify(dashWidgets));
     const payload={projs,nid};
-    await sb.from('projects').upsert({user_id:USER_ID,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    await sb.from('projects').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
   }catch(e){console.error('Save error:',e);}
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
@@ -947,7 +1035,17 @@ function checkIncomingShareLink(){
 }
 
 /* ── Boot ── */
-load(); // async — renders inside
+// Hide app until logged in
+document.querySelector('.app').style.display='none';
+// Check if already logged in
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session){
+    currentUser=session.user;
+    showApp();
+  } else {
+    showAuth();
+  }
+});
 </script>
 </body>
 </html>
