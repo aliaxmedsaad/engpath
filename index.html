@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EngPath</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -36,8 +37,6 @@
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.6;min-height:100vh}
 .app{display:flex;min-height:100vh}
-
-/* Sidebar */
 .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:.5px solid var(--bm);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .logo{padding:1.1rem 1rem .8rem;display:flex;align-items:center;gap:9px;border-bottom:.5px solid var(--b)}
 .logo-mark{width:30px;height:30px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center}
@@ -57,37 +56,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .sb-foot{padding:.85rem .65rem;border-top:.5px solid var(--b)}
 .add{width:100%;padding:.5rem;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
 .add:hover{opacity:.88}
-
-/* Main */
 .main{flex:1;min-width:0;padding:1.75rem 2.25rem 2rem}
 .view{display:none}.view.on{display:block}
-.ph{margin-bottom:1.5rem}
+.ph{margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.ph-left{}
 .pt{font-size:18px;font-weight:500;letter-spacing:-.02em}
 .ps{font-size:12.5px;color:var(--t2);margin-top:2px}
-
-/* Metrics */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:1.75rem}
-.mc{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);padding:.8rem .95rem}
+.mc{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);padding:.8rem .95rem;position:relative}
 .ml{font-size:11px;color:var(--t3);margin-bottom:4px}
 .mv{font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1}
 .mv.b{color:var(--blue)}.mv.t{color:var(--teal)}.mv.a{color:var(--amber)}.mv.p{color:var(--purple)}.mv.g{color:var(--green)}.mv.c{color:var(--coral)}
-
-/* Tags */
-.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:20px}
-.tpi{background:var(--blue-bg);color:var(--blue-t)}
-.tia{background:var(--teal-bg);color:var(--teal-t)}
-.tra{background:var(--amber-bg);color:var(--amber)}
-.tgi{background:var(--purple-bg);color:var(--purple)}
-.tcl{background:var(--gray-bg);color:var(--gray-t)}
-.tld{background:var(--green-bg);color:var(--green)}
-.tot{background:var(--gray-bg);color:var(--gray-t)}
-
+/* Dashboard customise */
+.dash-cust-btn{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .1s;white-space:nowrap}
+.dash-cust-btn:hover{background:var(--surface2)}
+.dash-cust-btn i{font-size:13px}
+/* Tag chips on cards */
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
 /* Chips */
 .chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.9rem}
 .chip{font-size:11.5px;padding:3px 11px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;transition:all .1s}
 .chip:hover{background:var(--surface2)}
 .chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-
 /* Project cards */
 .plist{display:flex;flex-direction:column;gap:5px}
 .pcard{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden;transition:border-color .15s}
@@ -105,8 +95,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .dl{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .dv{font-size:12.5px;color:var(--t1);line-height:1.5}
 .dv.mono{font-family:monospace;font-size:11.5px;color:var(--t2)}
-
-/* Buttons */
 .btn{font-size:11.5px;padding:4px 11px;border-radius:var(--r-sm);border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .1s}
 .btn i{font-size:13px}
 .btn:hover{background:var(--surface2)}
@@ -115,24 +103,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .btn.dn{color:var(--coral);border-color:rgba(153,60,29,.3)}
 .btn.dn:hover{background:var(--coral-bg)}
 .card-acts{display:flex;gap:7px;margin-top:.9rem}
-
-/* Reflections */
 .rfl-sec{margin-top:.9rem;display:flex;flex-direction:column;gap:.6rem}
 .rfl-h{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px;display:flex;align-items:center;gap:4px}
 .rfl-h i{font-size:13px}
 .rfl-t{font-size:12.5px;line-height:1.7;color:var(--t1);background:var(--surface2);border-radius:var(--r-sm);padding:.6rem .8rem;white-space:pre-wrap}
 .rfl-nil{font-size:12.5px;color:var(--t3);font-style:italic;margin-top:.75rem}
-
-/* ICE mini badges on card */
 .ice-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:.6rem}
 .ice-m{font-size:10px;padding:1px 6px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t);font-weight:500}
-
-/* Attr tracker */
 .mode-tabs{display:flex;gap:6px;margin-bottom:1.25rem}
 .mtab{font-size:12.5px;padding:5px 14px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;font-weight:500;transition:all .1s}
 .mtab:hover{background:var(--surface2)}
 .mtab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-
 .prog-wrap{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);padding:1.1rem 1.25rem;margin-bottom:1.25rem}
 .prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.6rem}
 .prog-label{font-size:12.5px;font-weight:500}
@@ -140,7 +121,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .prog-track{height:6px;background:var(--b);border-radius:20px;overflow:hidden}
 .prog-fill{height:100%;background:var(--blue);border-radius:20px;transition:width .3s ease}
 .prog-sub{font-size:11.5px;color:var(--t3);margin-top:.4rem}
-
 .agroup{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
 .ag-h{padding:.8rem 1rem;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
 .ag-num{width:24px;height:24px;border-radius:50%;background:var(--blue-bg);color:var(--blue-t);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -150,7 +130,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .ag-chev.o{transform:rotate(180deg)}
 .ag-body{display:none;border-top:.5px solid var(--b);padding:.5rem .9rem .75rem}
 .ag-body.o{display:block}
-
 .aitem{display:flex;align-items:flex-start;gap:9px;padding:.5rem .3rem;border-radius:7px;transition:background .1s}
 .aitem:hover{background:var(--surface2)}
 .achk{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--bm);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .12s;cursor:pointer}
@@ -166,13 +145,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .a-ev.ai-ev:hover{opacity:.8}
 .a-ev.man-ev{background:var(--blue-bg);color:var(--blue-t)}
 .a-ev.man-ev:hover{opacity:.8}
-.a-man-note{font-size:11px;color:var(--blue);font-style:italic;margin-top:2px}
-
-/* Override hint banner */
 .override-hint{background:var(--blue-bg);border:.5px solid rgba(24,95,165,.2);border-radius:var(--r-sm);padding:.55rem .8rem;font-size:12px;color:var(--blue-t);display:flex;align-items:center;gap:6px;margin-bottom:1rem}
 .override-hint i{font-size:14px;flex-shrink:0}
-
-/* Evidence log */
 .ev-list{display:flex;flex-direction:column;gap:6px}
 .ev-card{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden}
 .ev-h{padding:.8rem 1rem;display:flex;align-items:flex-start;gap:9px}
@@ -193,8 +167,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:
 .ev-proj i{font-size:12px}
 .ev-snip{font-size:12px;color:var(--t2);line-height:1.6;white-space:pre-wrap}
 .ev-nil{font-size:12px;color:var(--t3);font-style:italic;padding:.5rem 0 0}
-
-/* Deliverables table */
 .twrap{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden;margin-top:.9rem}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{text-align:left;padding:.55rem .85rem;font-size:10.5px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:.5px solid var(--bm)}
@@ -204,8 +176,6 @@ tr:hover td{background:var(--surface2)}
 td:first-child{color:var(--t1);font-weight:500}
 .pill{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:500;background:var(--surface2);color:var(--t3)}
 .pill.on{background:var(--blue-bg);color:var(--blue-t)}
-
-/* Modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:flex-start;justify-content:center;padding:2.5rem 1rem 1rem;overflow-y:auto}
 .overlay.o{display:flex}
 .modal{background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:560px;flex-shrink:0}
@@ -219,19 +189,22 @@ td:first-child{color:var(--t1);font-weight:500}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
 .field textarea{min-height:70px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.cgroup{display:flex;flex-wrap:wrap;gap:5px}
-.clabel{display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 10px;border:.5px solid var(--bm);border-radius:20px;cursor:pointer;color:var(--t2);transition:all .1s}
-.clabel input{display:none}
-.clabel:has(input:checked){background:var(--blue-bg);border-color:var(--blue);color:var(--blue-t);font-weight:500}
+/* Custom tag input */
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:.4rem .55rem;border:.5px solid var(--bm);border-radius:var(--r-sm);background:var(--surface);min-height:38px;align-items:center;cursor:text}
+.tag-input-wrap:focus-within{border-color:var(--blue)}
+.tag-pill{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
+.tag-pill button{background:none;border:none;cursor:pointer;color:var(--blue-t);font-size:13px;line-height:1;padding:0;display:flex;align-items:center}
+.tag-input-wrap input{border:none;outline:none;font-size:12.5px;color:var(--t1);background:transparent;min-width:80px;flex:1;font-family:inherit}
 .mf{display:flex;justify-content:flex-end;gap:7px;padding:.85rem 1.25rem;border-top:.5px solid var(--b)}
 .ai-note{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3)}
 .ai-note i{font-size:13px;color:var(--blue)}
-
-/* Toast */
 .toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(6px);background:var(--t1);color:var(--surface);padding:.5rem 1rem;border-radius:20px;font-size:12.5px;opacity:0;pointer-events:none;transition:all .18s;z-index:200;white-space:nowrap}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-
 .sh{font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.65rem}
+/* Dashboard tag summary */
+.tag-summary{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:1.5rem}
+.tag-count{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
+.tag-count .tc-num{font-size:11px;background:var(--blue);color:#fff;border-radius:20px;padding:0 5px;min-width:18px;text-align:center}
 @media(max-width:640px){.sidebar{display:none}.main{padding:1rem}.dgrid,.frow{grid-template-columns:1fr}}
 </style>
 </head>
@@ -268,28 +241,32 @@ td:first-child{color:var(--t1);font-weight:500}
   <main class="main">
     <!-- Dashboard -->
     <div class="view on" id="view-dash">
-      <div class="ph"><div class="pt">Dashboard</div><div class="ps" id="dash-sub"></div></div>
+      <div class="ph">
+        <div class="ph-left"><div class="pt">Dashboard</div><div class="ps" id="dash-sub"></div></div>
+        <button class="dash-cust-btn" onclick="openDashCustomise()"><i class="ti ti-layout-grid"></i> Customise</button>
+      </div>
       <div class="metrics" id="dash-metrics"></div>
+      <div id="dash-tag-summary"></div>
       <div class="sh">Recent projects</div>
       <div class="plist" id="dash-list"></div>
     </div>
 
     <!-- Projects -->
     <div class="view" id="view-projects">
-      <div class="ph"><div class="pt">All projects</div><div class="ps">Tap any project to expand and write your reflections.</div></div>
+      <div class="ph"><div class="ph-left"><div class="pt">All projects</div><div class="ps">Tap any project to expand and write your reflections.</div></div></div>
       <div class="chips" id="proj-chips"></div>
       <div class="plist" id="proj-list"></div>
     </div>
 
     <!-- Deliverables -->
     <div class="view" id="view-summary">
-      <div class="ph"><div class="pt">Deliverables</div><div class="ps">All PIs, IfAs, RAMS and GIs across every project.</div></div>
+      <div class="ph"><div class="ph-left"><div class="pt">Deliverables</div><div class="ps">Overview of work across every project.</div></div></div>
       <div class="twrap"><table id="sum-tbl"></table></div>
     </div>
 
     <!-- Attribute tracker -->
     <div class="view" id="view-attrs">
-      <div class="ph"><div class="pt">Attribute tracker</div><div class="ps">AI-mapped from your reflections. Override any attribute manually by clicking the checkbox.</div></div>
+      <div class="ph"><div class="ph-left"><div class="pt">Attribute tracker</div><div class="ps">AI-mapped from your reflections. Override any attribute manually by clicking the checkbox.</div></div></div>
       <div class="mode-tabs">
         <button class="mtab on" onclick="setAMode('ieng',this)">IEng (MICE)</button>
         <button class="mtab" onclick="setAMode('ceng',this)">CEng (MICE)</button>
@@ -301,7 +278,7 @@ td:first-child{color:var(--t1);font-weight:500}
 
     <!-- Evidence log -->
     <div class="view" id="view-evid">
-      <div class="ph"><div class="pt">Evidence log</div><div class="ps">What you've evidenced per ICE attribute, from project reflections and manual overrides.</div></div>
+      <div class="ph"><div class="ph-left"><div class="pt">Evidence log</div><div class="ps">What you've evidenced per ICE attribute, from project reflections and manual overrides.</div></div></div>
       <div class="mode-tabs">
         <button class="mtab on" onclick="setEMode('ieng',this)">IEng (MICE)</button>
         <button class="mtab" onclick="setEMode('ceng',this)">CEng (MICE)</button>
@@ -311,33 +288,22 @@ td:first-child{color:var(--t1);font-weight:500}
   </main>
 </div>
 
-<!-- Modal -->
+<!-- Project Modal -->
 <div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="mh"><h3 id="modal-title">Add project</h3><button class="mclose" onclick="closeModal()">×</button></div>
     <div class="mb">
       <input type="hidden" id="eid">
       <div class="field"><label>Project name</label><input type="text" id="f-name" placeholder="e.g. Slough"></div>
-      <div class="frow">
-        <div class="field"><label>PIs</label><input type="text" id="f-pis" placeholder="1827, 2447…"></div>
-        <div class="field"><label>IfAs</label><input type="text" id="f-ifas" placeholder="e.g. CP7 IfA"></div>
-      </div>
-      <div class="frow">
-        <div class="field"><label>RAMS count</label><input type="text" id="f-rams" placeholder="e.g. 50+"></div>
-        <div class="field"><label>GIs</label><input type="text" id="f-gis" placeholder="e.g. AOS PIs, GIS"></div>
-      </div>
-      <div class="field"><label>Other activities</label><input type="text" id="f-other" placeholder="Planning, Calculations, Validation…"></div>
       <div class="field">
         <label>Tags</label>
-        <div class="cgroup">
-          <label class="clabel"><input type="checkbox" name="tag" value="pi">PI work</label>
-          <label class="clabel"><input type="checkbox" name="tag" value="ifa">IfA</label>
-          <label class="clabel"><input type="checkbox" name="tag" value="rams">RAMS</label>
-          <label class="clabel"><input type="checkbox" name="tag" value="gi">GI</label>
-          <label class="clabel"><input type="checkbox" name="tag" value="calc">Calculations</label>
-          <label class="clabel"><input type="checkbox" name="tag" value="lead">Led work</label>
+        <div class="tag-input-wrap" id="tag-input-wrap" onclick="document.getElementById('tag-text-input').focus()">
+          <input type="text" id="tag-text-input" placeholder="Type a tag and press Enter…" onkeydown="handleTagInput(event)" oninput="showTagSuggestions(this.value)">
         </div>
+        <div id="tag-suggestions" style="display:none;margin-top:4px;background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r-sm);overflow:hidden"></div>
       </div>
+      <div class="field"><label>Notes / activities</label><textarea id="f-other" placeholder="e.g. Calculations, Validation, Planning…"></textarea></div>
+      <div class="field"><label>RAMS count</label><input type="number" id="f-rams" placeholder="e.g. 117" min="0"></div>
       <div class="field"><label>Technical reflection</label><textarea id="f-tech" placeholder="What technical skills did you use or develop?"></textarea></div>
       <div class="field"><label>Personal reflection</label><textarea id="f-per" placeholder="What did you learn about yourself or working with others?"></textarea></div>
       <div class="field"><label>Challenges</label><textarea id="f-chal" placeholder="What was difficult, and how did you handle it?"></textarea></div>
@@ -377,36 +343,78 @@ const ICE={
 
 const KW={1:['engineer','design','solution','technical','calculat','theory','problem','method','technolog','implement','procedure','evaluat','PI','inspection','analysis','structural','hydraulic'],2:['manag','lead','plan','team','organis','resource','quality','schedule','supervise','coordinat','programme'],3:['cost','budget','commercial','contract','financial','NEC','statutory','spend'],4:['safety','RAMS','risk','hazard','health','welfare','CDM','method statement','HSE'],5:['sustainab','environment','carbon','climate','SDG','green','ecology','waste'],6:['communicat','present','report','stakeholder','client','meeting','discuss','written','oral','diversity'],7:['CPD','ethics','code of conduct','ICE','professional','reflec','training','competence']};
 
-/* ── State ── */
+/* ── Default data ── */
 const DEFS=[
-  {id:1,name:"Slough",tags:["pi","calc"],pis:"1827, 2447, 2448, 2449, 2431, 908, 2119, 2653",ifas:"",rams:"",gis:"",other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:2,name:"Bracknell",tags:["pi"],pis:"1873",ifas:"",rams:"",gis:"",other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:3,name:"Wiltshire (WPP)",tags:["pi"],pis:"Wiltshire WPP",ifas:"",rams:"",gis:"",other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:4,name:"Thames Water – Year 1",tags:["rams","gi"],pis:"",ifas:"",rams:"50+",gis:"AOS PIs, GIS",other:"Planning/Management, Water quality training, AOS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:5,name:"Thames Water – Year 2",tags:["rams"],pis:"",ifas:"",rams:"Year 2",gis:"",other:"Planning/Management, Additional training",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:6,name:"Pad Foundation for Scouts",tags:["calc"],pis:"",ifas:"",rams:"",gis:"",other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:7,name:"CAFA",tags:["other"],pis:"",ifas:"",rams:"",gis:"",other:"CAFA involvement",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:8,name:"Northwest & Central CP7",tags:["ifa","lead"],pis:"",ifas:"CP7 IfAs",rams:"",gis:"",other:"Planning/Management, Managing & leading team",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:9,name:"CP7",tags:["other"],pis:"",ifas:"",rams:"",gis:"",other:"Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:10,name:"Buckinghamshire (CAFA Y1)",tags:["other"],pis:"",ifas:"",rams:"",gis:"",other:"Night TVP, Communication, Making drawings",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:11,name:"Oxford",tags:["lead"],pis:"",ifas:"",rams:"",gis:"",other:"Contract work, Led SPONS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:12,name:"Cardiff Central Station Link",tags:["calc"],pis:"",ifas:"",rams:"",gis:"",other:"Calculations, Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:13,name:"Severn Tunnel Junction",tags:["other"],pis:"",ifas:"",rams:"",gis:"",other:"Validation, Form A",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
-  {id:14,name:"Health & Safety Committee",tags:["other"],pis:"",ifas:"",rams:"",gis:"",other:"H&S interview, Committee participation",tech:"",per:"",chal:"",aiMap:{},manMap:{}}
+  {id:1,name:"Slough",tags:["PI work","Calculations"],rams:0,other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:2,name:"Bracknell",tags:["PI work"],rams:0,other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:3,name:"Wiltshire (WPP)",tags:["PI work"],rams:0,other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:4,name:"Thames Water – Year 1",tags:["RAMS","GI"],rams:50,other:"Planning/Management, Water quality training, AOS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:5,name:"Thames Water – Year 2",tags:["RAMS"],rams:67,other:"Planning/Management, Additional training",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:6,name:"Pad Foundation for Scouts",tags:["Calculations"],rams:0,other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:7,name:"CAFA",tags:["Other"],rams:0,other:"CAFA involvement",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:8,name:"Northwest & Central CP7",tags:["IfA","Led work"],rams:0,other:"Planning/Management, Managing & leading team",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:9,name:"CP7",tags:["Other"],rams:0,other:"Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:10,name:"Buckinghamshire (CAFA Y1)",tags:["Other"],rams:0,other:"Night TVP, Communication, Making drawings",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:11,name:"Oxford",tags:["Led work"],rams:0,other:"Contract work, Led SPONS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:12,name:"Cardiff Central Station Link",tags:["Calculations"],rams:0,other:"Calculations, Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:13,name:"Severn Tunnel Junction",tags:["Other"],rams:0,other:"Validation, Form A",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:14,name:"Health & Safety Committee",tags:["Other"],rams:0,other:"H&S interview, Committee participation",tech:"",per:"",chal:"",aiMap:{},manMap:{}}
 ];
 
-let projs=[], nid=100, filt='all', expId=null, aMode='ieng', eMode='ieng';
+/* ── Dashboard widget config ── */
+const DEFAULT_WIDGETS=['projects','rams','tags','ieng','ceng'];
+let dashWidgets=[];
 
-function load(){
-  try{
-    const s=localStorage.getItem('pt4');const n=localStorage.getItem('pt4_id');
-    if(s){projs=JSON.parse(s);nid=n?+n:100;}
-    else{projs=JSON.parse(JSON.stringify(DEFS));sv();}
-    // migrate: ensure manMap exists
-    projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};});
-  }catch{projs=JSON.parse(JSON.stringify(DEFS));}
+/* ── State ── */
+let projs=[], nid=100, filt='all', expId=null, aMode='ieng', eMode='ieng';
+// Current tags being edited in modal
+let modalTags=[];
+
+/* ── Supabase ── */
+const SUPA_URL='https://avmxfiwcgmhxrzdpvmnk.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bXhmaXdjZ21oeHJ6ZHB2bW5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NzYwMzMsImV4cCI6MjA2NjU1MjAzM30.yE3hO7IzPpMHFmFpAiJBvcqfpkel3LEpEdkRYNLpXLc';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// Get or create a stable user ID stored in localStorage
+function getUserId(){
+  let uid=localStorage.getItem('engpath_uid');
+  if(!uid){uid=crypto.randomUUID();localStorage.setItem('engpath_uid',uid);}
+  return uid;
 }
-function sv(){localStorage.setItem('pt4',JSON.stringify(projs));localStorage.setItem('pt4_id',nid);}
+const USER_ID=getUserId();
+
+async function load(){
+  try{
+    const w=localStorage.getItem('pt5_widgets');
+    dashWidgets=w?JSON.parse(w):[...DEFAULT_WIDGETS];
+    // Try to load from Supabase
+    const {data,error}=await sb.from('projects').select('data').eq('user_id',USER_ID).single();
+    if(data&&data.data){
+      const saved=data.data;
+      projs=saved.projs||[];
+      nid=saved.nid||100;
+      projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};if(!p.tags)p.tags=[];if(p.rams===undefined)p.rams=0;});
+    } else {
+      // First time — use defaults
+      projs=JSON.parse(JSON.stringify(DEFS));
+      await sv();
+    }
+  }catch(e){
+    console.error('Load error:',e);
+    projs=JSON.parse(JSON.stringify(DEFS));
+    dashWidgets=[...DEFAULT_WIDGETS];
+  }
+  renderDash();
+  checkIncomingShareLink();
+}
+
+async function sv(){
+  try{
+    localStorage.setItem('pt5_widgets',JSON.stringify(dashWidgets));
+    const payload={projs,nid};
+    await sb.from('projects').upsert({user_id:USER_ID,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  }catch(e){console.error('Save error:',e);}
+}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
 
 /* ── AI mapping ── */
@@ -419,28 +427,25 @@ async function aiMap(proj){
 
 "${txt}"
 
-Activities: ${proj.other||'none'}, PIs: ${proj.pis||'none'}, IfAs: ${proj.ifas||'none'}, RAMS: ${proj.rams||'none'}, GIs: ${proj.gis||'none'}
+Tags: ${(proj.tags||[]).join(', ')||'none'}, RAMS: ${proj.rams||0}
 
 ICE attributes:
 ${JSON.stringify(list)}
 
 Return ONLY a JSON object where keys are attribute keys and values are short evidence strings (max 20 words each, be concise). Only include genuinely evidenced attributes — do not force matches that aren't really supported by the text. No markdown, no explanation, no text before or after the JSON object.`;
   try{
-    // 🔧 Replace this URL with your Render backend URL once deployed
-    // e.g. 'https://engpath-backend.onrender.com/api/map'
-    const BACKEND_URL = 'https://engpath-backend.onrender.com/api/map';
+    const BACKEND_URL='https://engpath-backend.onrender.com/api/map';
     const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     if(!r.ok){console.error('aiMap: API request failed',r.status,await r.text());return kwFallback(proj);}
     const d=await r.json();
     let t=d.text||'{}';
     t=t.replace(/```json|```/g,'').trim();
-    // If the model added stray text around the JSON, isolate the outermost {...}
     const first=t.indexOf('{'),last=t.lastIndexOf('}');
     if(first>-1&&last>first) t=t.slice(first,last+1);
     const parsed=JSON.parse(t);
-    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('aiMap: parsed result was not an object');
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('not an object');
     return parsed;
-  }catch(err){console.error('aiMap failed, falling back to keyword matching:',err);return kwFallback(proj);}
+  }catch(err){console.error('aiMap failed, falling back:',err);return kwFallback(proj);}
 }
 
 function kwFallback(proj){
@@ -454,66 +459,97 @@ function kwFallback(proj){
 }
 
 /* ── Coverage helpers ── */
-function aiCov(mode){
-  const m={};
-  projs.forEach(p=>Object.entries(p.aiMap||{}).forEach(([k,s])=>{
-    if(!k.startsWith(mode+'_')) return;
-    if(!m[k]) m[k]=[];
-    m[k].push({proj:p.name,snip:s,type:'ai'});
-  }));
-  return m;
-}
-
-// manMap: key -> true (manually added) or false (manually removed)
-// effective coverage = (aiMap has key OR manMap[key]===true) AND manMap[key]!==false
 function effectiveCov(mode){
   const m={};
   projs.forEach(p=>{
     const am=p.aiMap||{};const mm=p.manMap||{};
-    // AI entries not manually removed
     Object.entries(am).forEach(([k,s])=>{
       if(!k.startsWith(mode+'_')) return;
-      if(mm[k]===false) return; // manually removed
+      if(mm[k]===false) return;
       if(!m[k]) m[k]=[];
       m[k].push({proj:p.name,snip:s,type:'ai'});
     });
-    // Manual additions
     Object.entries(mm).forEach(([k,v])=>{
       if(!k.startsWith(mode+'_')||v!==true) return;
       if(!m[k]) m[k]=[];
-      // only add manual entry if not already from ai for this project
       if(!m[k].find(e=>e.proj===p.name&&e.type==='ai'))
         m[k].push({proj:p.name,snip:'Manually confirmed as evidenced.',type:'manual'});
     });
   });
   return m;
 }
-
 function totalAttrs(mode){return ICE[mode].reduce((a,g)=>a+g.a.length,0);}
 function covCount(mode){return Object.keys(effectiveCov(mode)).length;}
 
-/* ── Toggle manual override ── */
-function toggleManual(projId, key){
-  const p=projs.find(x=>x.id===projId);if(!p) return;
-  if(!p.manMap) p.manMap={};
-  const hasAI=!!(p.aiMap&&p.aiMap[key]);
-  const cur=p.manMap[key]; // true | false | undefined
-  if(cur===undefined){
-    // AI determined state
-    if(hasAI){p.manMap[key]=false;} // force off
-    else{p.manMap[key]=true;} // force on
-  } else if(cur===true){
-    p.manMap[key]=false; // was manually on → force off
-  } else {
-    delete p.manMap[key]; // was manually off → restore to AI state
-  }
-  sv();renderAttrs();renderEvid();
+/* ── Tag helpers ── */
+function allTags(){
+  const s=new Set();
+  projs.forEach(p=>(p.tags||[]).forEach(t=>s.add(t)));
+  return[...s].sort();
+}
+function tagCounts(){
+  const m={};
+  projs.forEach(p=>(p.tags||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));
+  return m;
+}
+// Generate a consistent colour for any tag string
+function tagColor(tag){
+  const colours=['tpi','tia','tra','tgi','tcl','tld','tot'];
+  let h=0;for(let i=0;i<tag.length;i++)h=(h*31+tag.charCodeAt(i))&0xffff;
+  return colours[h%colours.length];
+}
+const CC={tpi:'var(--blue-bg)',tia:'var(--teal-bg)',tra:'var(--amber-bg)',tgi:'var(--purple-bg)',tcl:'var(--gray-bg)',tld:'var(--green-bg)',tot:'var(--gray-bg)'};
+const CT={tpi:'var(--blue-t)',tia:'var(--teal-t)',tra:'var(--amber)',tgi:'var(--purple)',tcl:'var(--gray-t)',tld:'var(--green)',tot:'var(--gray-t)'};
+function tagH(tags){
+  return(tags||[]).map(t=>{
+    const c=tagColor(t);
+    return`<span class="tag" style="background:${CC[c]};color:${CT[c]}">${t}</span>`;
+  }).join('');
 }
 
-/* ── Tags / cards ── */
-const TC={pi:{l:'PI',c:'tpi'},ifa:{l:'IfA',c:'tia'},rams:{l:'RAMS',c:'tra'},gi:{l:'GI',c:'tgi'},calc:{l:'Calcs',c:'tcl'},lead:{l:'Led',c:'tld'},other:{l:'Other',c:'tot'}};
-function tagH(tags){return(tags||[]).map(t=>{const c=TC[t]||TC.other;return`<span class="tag ${c.c}">${c.l}</span>`;}).join('');}
+/* ── Modal tag input ── */
+function renderModalTags(){
+  const wrap=document.getElementById('tag-input-wrap');
+  const inp=document.getElementById('tag-text-input');
+  // Remove existing pills
+  wrap.querySelectorAll('.tag-pill').forEach(el=>el.remove());
+  modalTags.forEach((t,i)=>{
+    const pill=document.createElement('span');
+    pill.className='tag-pill';
+    pill.innerHTML=`${t}<button onclick="removeModalTag(${i})" type="button"><i class="ti ti-x"></i></button>`;
+    wrap.insertBefore(pill,inp);
+  });
+}
+function removeModalTag(i){modalTags.splice(i,1);renderModalTags();}
+function handleTagInput(e){
+  const inp=e.target;
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const val=inp.value.trim().replace(/,$/,'');
+    if(val&&!modalTags.includes(val)){modalTags.push(val);renderModalTags();}
+    inp.value='';
+    hideTagSuggestions();
+  } else if(e.key==='Backspace'&&inp.value===''&&modalTags.length){
+    modalTags.pop();renderModalTags();
+  }
+}
+function showTagSuggestions(val){
+  const box=document.getElementById('tag-suggestions');
+  if(!val.trim()){box.style.display='none';return;}
+  const matches=allTags().filter(t=>t.toLowerCase().includes(val.toLowerCase())&&!modalTags.includes(t));
+  if(!matches.length){box.style.display='none';return;}
+  box.style.display='block';
+  box.innerHTML=matches.map(t=>`<button onclick="selectTagSuggestion('${t.replace(/'/g,"\\'")}');" style="display:block;width:100%;text-align:left;padding:.35rem .65rem;font-size:12.5px;background:none;border:none;cursor:pointer;color:var(--t1)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">${t}</button>`).join('');
+}
+function selectTagSuggestion(t){
+  if(!modalTags.includes(t))modalTags.push(t);
+  renderModalTags();
+  document.getElementById('tag-text-input').value='';
+  hideTagSuggestions();
+}
+function hideTagSuggestions(){document.getElementById('tag-suggestions').style.display='none';}
 
+/* ── ICE labels ── */
 function iceLabels(p){
   const s=new Set();
   ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>{
@@ -526,17 +562,14 @@ function iceLabels(p){
   return[...s].sort();
 }
 
+/* ── Card HTML ── */
 function cardH(p){
-  const piArr=p.pis?p.pis.split(',').map(x=>x.trim()).filter(Boolean):[];
   const isO=expId===p.id;
   const hasr=p.tech||p.per||p.chal;
   const lbls=iceLabels(p);
   const dboxes=[
-    piArr.length?`<div class="dbox"><div class="dl">PIs (${piArr.length})</div><div class="dv mono">${piArr.join(', ')}</div></div>`:'',
-    p.ifas?`<div class="dbox"><div class="dl">IfAs</div><div class="dv">${p.ifas}</div></div>`:'',
     p.rams?`<div class="dbox"><div class="dl">RAMS</div><div class="dv">${p.rams}</div></div>`:'',
-    p.gis?`<div class="dbox"><div class="dl">GIs</div><div class="dv">${p.gis}</div></div>`:'',
-    p.other?`<div class="dbox" style="grid-column:1/-1"><div class="dl">Other activities</div><div class="dv">${p.other}</div></div>`:''
+    p.other?`<div class="dbox" style="grid-column:1/-1"><div class="dl">Notes / Activities</div><div class="dv">${p.other}</div></div>`:''
   ].filter(Boolean).join('');
   const rflH=hasr?`<div class="rfl-sec">
     ${p.tech?`<div><div class="rfl-h"><i class="ti ti-tool" aria-hidden="true"></i> Technical</div><div class="rfl-t">${p.tech}</div></div>`:''}
@@ -561,47 +594,112 @@ function cardH(p){
   </div>`;
 }
 
-/* ── Render ── */
+/* ── Metrics ── */
 function calcMetrics(){
-  const piN=projs.reduce((a,p)=>a+(p.pis?p.pis.split(',').filter(x=>x.trim()).length:0),0);
-  const rN=projs.reduce((a,p)=>{const n=parseInt(p.rams||'');return a+(isNaN(n)?0:n);},0);
-  return{tot:projs.length,piN,rams:rN>=50?'50+':(rN||'–'),ifaN:projs.filter(p=>p.ifas&&p.ifas.trim()).length,giN:projs.filter(p=>p.gis&&p.gis.trim()).length,
-    iC:covCount('ieng'),iT:totalAttrs('ieng'),cC:covCount('ceng'),cT:totalAttrs('ceng')};
+  const rams=projs.reduce((a,p)=>a+(parseInt(p.rams)||0),0);
+  return{
+    tot:projs.length,
+    rams,
+    iC:covCount('ieng'),iT:totalAttrs('ieng'),
+    cC:covCount('ceng'),cT:totalAttrs('ceng')
+  };
 }
 
+/* ── Dashboard customise ── */
+const WIDGET_DEFS=[
+  {id:'projects',l:'Total projects',c:''},
+  {id:'rams',l:'Total RAMS',c:'a'},
+  {id:'ieng',l:'IEng attrs',c:'g'},
+  {id:'ceng',l:'CEng attrs',c:'c'},
+  {id:'tags',l:'Tag summary',c:''},
+];
+
+function openDashCustomise(){
+  let old=document.getElementById('cust-overlay');if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='cust-overlay';
+  Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:400px;overflow:hidden">
+    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:500">Customise dashboard</div>
+      <button onclick="document.getElementById('cust-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.5rem">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:.25rem">Choose what to show on your dashboard:</div>
+      ${WIDGET_DEFS.map(w=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
+        <input type="checkbox" id="wcb-${w.id}" ${dashWidgets.includes(w.id)?'checked':''} style="width:15px;height:15px;cursor:pointer">
+        ${w.l}
+      </label>`).join('')}
+    </div>
+    <div style="padding:.75rem 1.1rem;border-top:.5px solid var(--b);display:flex;justify-content:flex-end;gap:7px">
+      <button class="btn" onclick="document.getElementById('cust-overlay').remove()">Cancel</button>
+      <button class="btn pr" onclick="saveDashCustomise()">Save</button>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function saveDashCustomise(){
+  dashWidgets=WIDGET_DEFS.filter(w=>document.getElementById('wcb-'+w.id)?.checked).map(w=>w.id);
+  sv();renderDash();
+  document.getElementById('cust-overlay')?.remove();
+  toast('Dashboard updated');
+}
+
+/* ── Render dashboard ── */
 function renderDash(){
   const m=calcMetrics();
-  document.getElementById('dash-sub').textContent=`${m.tot} projects · ${m.piN} PIs · ${m.rams} RAMS`;
+  document.getElementById('dash-sub').textContent=`${m.tot} projects · ${m.rams} RAMS`;
   document.getElementById('sb-sub').textContent=`${m.tot} projects`;
-  document.getElementById('dash-metrics').innerHTML=[
-    {l:'Projects',v:m.tot,c:''},
-    {l:'PIs',v:m.piN,c:'b'},
-    {l:'RAMS',v:m.rams,c:'a'},
-    {l:'IfAs',v:m.ifaN,c:'t'},
-    {l:'GIs',v:m.giN,c:'p'},
-    {l:'IEng attrs',v:`${m.iC}/${m.iT}`,c:'g'},
-    {l:'CEng attrs',v:`${m.cC}/${m.cT}`,c:'c'},
-  ].map(x=>`<div class="mc"><div class="ml">${x.l}</div><div class="mv ${x.c}">${x.v}</div></div>`).join('');
+
+  // Metric cards (excluding 'tags' which is rendered separately)
+  const metricWidgets=dashWidgets.filter(w=>w!=='tags');
+  const metricDefs={
+    projects:{l:'Projects',v:m.tot,c:''},
+    rams:{l:'RAMS',v:m.rams,c:'a'},
+    ieng:{l:'IEng attrs',v:`${m.iC}/${m.iT}`,c:'g'},
+    ceng:{l:'CEng attrs',v:`${m.cC}/${m.cT}`,c:'c'},
+  };
+  document.getElementById('dash-metrics').innerHTML=metricWidgets
+    .filter(w=>metricDefs[w])
+    .map(w=>{const d=metricDefs[w];return`<div class="mc"><div class="ml">${d.l}</div><div class="mv ${d.c}">${d.v}</div></div>`;})
+    .join('');
+
+  // Tag summary
+  const tagEl=document.getElementById('dash-tag-summary');
+  if(dashWidgets.includes('tags')){
+    const tc=tagCounts();
+    const entries=Object.entries(tc).sort((a,b)=>b[1]-a[1]);
+    if(entries.length){
+      tagEl.innerHTML=`<div style="font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.5rem">Tags across all projects</div><div class="tag-summary">${entries.map(([t,n])=>{
+        const c=tagColor(t);
+        return`<span class="tag-count" style="background:${CC[c]};color:${CT[c]}">${t}<span class="tc-num">${n}</span></span>`;
+      }).join('')}</div>`;
+    } else {tagEl.innerHTML='';}
+  } else {tagEl.innerHTML='';}
+
   document.getElementById('sb-projs').innerHTML=projs.map(p=>`<button class="pnav" onclick="jumpTo(${p.id})"><span class="pdot"></span>${p.name}</button>`).join('');
   document.getElementById('dash-list').innerHTML=[...projs].slice(-5).reverse().map(cardH).join('');
 }
 
+/* ── Render projects ── */
 function renderProjs(){
-  const tags=['all','pi','ifa','rams','gi','calc','lead'];
-  const lbl={all:'All',pi:'PIs',ifa:'IfA',rams:'RAMS',gi:'GI',calc:'Calcs',lead:'Led'};
-  document.getElementById('proj-chips').innerHTML=tags.map(t=>`<button class="chip ${filt===t?'on':''}" onclick="setFilt('${t}',this)">${lbl[t]}</button>`).join('');
+  const tags=['all',...allTags()];
+  document.getElementById('proj-chips').innerHTML=tags.map(t=>`<button class="chip ${filt===t?'on':''}" onclick="setFilt('${t.replace(/'/g,"\\'")}',this)">${t==='all'?'All':t}</button>`).join('');
   const fp=filt==='all'?projs:projs.filter(p=>(p.tags||[]).includes(filt));
   document.getElementById('proj-list').innerHTML=fp.map(cardH).join('')||'<p style="color:var(--t3);font-size:12.5px;padding:.75rem 0">No projects match this filter.</p>';
 }
 
+/* ── Render deliverables ── */
 function renderSum(){
   const rows=projs.map(p=>{
-    const pa=p.pis?p.pis.split(',').map(x=>x.trim()).filter(Boolean):[];
-    return`<tr><td>${p.name}</td><td><span class="pill ${pa.length?'on':''}">${pa.length||'–'}</span></td><td style="font-family:monospace;font-size:11.5px">${pa.join(', ')||'–'}</td><td><span class="pill ${p.ifas?'on':''}">${p.ifas?'✓':'–'}</span></td><td><span class="pill ${p.rams?'on':''}">${p.rams||'–'}</span></td><td><span class="pill ${p.gis?'on':''}">${p.gis?'✓':'–'}</span></td></tr>`;
+    return`<tr><td>${p.name}</td><td>${(p.tags||[]).map(t=>`<span class="tag" style="background:${CC[tagColor(t)]};color:${CT[tagColor(t)]}">${t}</span>`).join(' ')||'–'}</td><td><span class="pill ${p.rams?'on':''}">${p.rams||'–'}</span></td><td style="font-size:12px;color:var(--t2)">${p.other||'–'}</td></tr>`;
   }).join('');
-  document.getElementById('sum-tbl').innerHTML=`<thead><tr><th>Project</th><th>PIs</th><th>PI numbers</th><th>IfAs</th><th>RAMS</th><th>GIs</th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById('sum-tbl').innerHTML=`<thead><tr><th>Project</th><th>Tags</th><th>RAMS</th><th>Notes</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
+/* ── Render attributes ── */
 function renderAttrs(){
   const mode=aMode;
   const ec=effectiveCov(mode);
@@ -611,27 +709,19 @@ function renderAttrs(){
     <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
     <div class="prog-sub">${pct}% complete · ${tot-cov} still to evidence</div>
   </div>`;
-
   document.getElementById('attr-groups').innerHTML=ICE[mode].map(g=>{
     const gc=g.a.filter((_,i)=>ec[`${mode}_${g.g}_${i}`]).length;
     const items=g.a.map((a,i)=>{
       const k=`${mode}_${g.g}_${i}`;
       const entries=ec[k]||[];
       const isCv=entries.length>0;
-      // determine visual state per project for manual overrides
-      // for the checkbox: show per-attribute state globally (covered = effective coverage)
-      // Clicking cycles: uncovered→manual-on, manual-on→AI-state (remove override), AI-on→manual-off
       const aiEntries=entries.filter(e=>e.type==='ai');
       const manEntries=entries.filter(e=>e.type==='manual');
       const chkClass=isCv?(manEntries.length&&!aiEntries.length?'achk man':'achk cv'):'achk';
       const textCls=isCv?(manEntries.length&&!aiEntries.length?'atext man':'atext cv'):'atext';
-      // Find which project has the most relevant override (use first project with non-default state)
-      // For simplicity: clicking will cycle on the first project that has AI data, or first project globally
-      const refProjId=projs[0]?.id;
       const evTags=entries.map(e=>`<span class="a-ev ${e.type==='ai'?'ai-ev':'man-ev'}" title="${e.snip}"><i class="ti ti-folder" aria-hidden="true"></i>${e.proj}${e.type==='manual'?' (manual)':''}</span>`).join('');
-      // Multi-project toggle: open a picker or just toggle first project
       return`<div class="aitem">
-        <div class="${chkClass}" onclick="pickProjToggle('${k}')" title="${isCv?'Click to override / remove coverage':'Click to manually mark as covered'}">${isCv?'<i class="ti ti-check" aria-hidden="true"></i>':''}</div>
+        <div class="${chkClass}" onclick="pickProjToggle('${k}')">${isCv?'<i class="ti ti-check" aria-hidden="true"></i>':''}</div>
         <div style="flex:1">
           <div class="${textCls}">${a}</div>
           ${isCv?`<div class="a-evs">${evTags}</div>`:''}
@@ -651,6 +741,7 @@ function renderAttrs(){
   }).join('');
 }
 
+/* ── Render evidence ── */
 function renderEvid(){
   const mode=eMode;const ec=effectiveCov(mode);
   document.getElementById('ev-list').innerHTML=ICE[mode].flatMap(g=>g.a.map((a,i)=>{
@@ -674,25 +765,25 @@ function renderEvid(){
   })).join('');
 }
 
-/* ── Attribute toggle picker ── */
+/* ── Manual toggle ── */
+function toggleManual(projId,key){
+  const p=projs.find(x=>x.id===projId);if(!p) return;
+  if(!p.manMap) p.manMap={};
+  const hasAI=!!(p.aiMap&&p.aiMap[key]);
+  const cur=p.manMap[key];
+  if(cur===undefined){if(hasAI){p.manMap[key]=false;}else{p.manMap[key]=true;}}
+  else if(cur===true){p.manMap[key]=false;}
+  else{delete p.manMap[key];}
+  sv();renderAttrs();renderEvid();
+}
+
 function pickProjToggle(key){
-  // If only one project, toggle directly
-  // If multiple, show which projects have this attr and let user pick
-  // Simple approach: find all projects that have relevant AI or manual state for this key
-  const mode=key.split('_')[0];
-  const relevant=projs.filter(p=>{
-    const ai=!!(p.aiMap&&p.aiMap[key]);
-    const mm=(p.manMap||{})[key];
-    return ai||mm!==undefined;
-  });
   if(projs.length===1){toggleManual(projs[0].id,key);return;}
-  // Show a quick modal-like picker
   showPickerModal(key);
 }
 
 function showPickerModal(key){
-  // Build a small overlay to pick which project to toggle
-  let old=document.getElementById('pick-overlay');if(old) old.remove();
+  let old=document.getElementById('pick-overlay');if(old)old.remove();
   const mode=key.split('_')[0];const parts=key.split('_');const gIdx=+parts[1]-1;const aIdx=+parts[2];
   const g=ICE[mode][gIdx];const attrName=g?g.a[aIdx]:'Attribute';
   const overlay=document.createElement('div');
@@ -700,14 +791,11 @@ function showPickerModal(key){
   Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
   overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:440px;overflow:hidden">
     <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:11px;color:var(--t3);margin-bottom:2px">Toggle attribute coverage</div>
-        <div style="font-size:13px;font-weight:500">${attrName}</div>
-      </div>
+      <div><div style="font-size:11px;color:var(--t3);margin-bottom:2px">Toggle attribute coverage</div><div style="font-size:13px;font-weight:500">${attrName}</div></div>
       <button onclick="document.getElementById('pick-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
     <div style="padding:.75rem .9rem">
-      <div style="font-size:11.5px;color:var(--t2);margin-bottom:.6rem">Select a project to toggle its contribution to this attribute:</div>
+      <div style="font-size:11.5px;color:var(--t2);margin-bottom:.6rem">Select a project to toggle:</div>
       <div style="display:flex;flex-direction:column;gap:4px">
         ${projs.map(p=>{
           const ai=!!(p.aiMap&&p.aiMap[key]);
@@ -717,9 +805,8 @@ function showPickerModal(key){
           else if(mm===false){state='Manually off';stateC='color:var(--coral)';}
           else if(ai){state='AI covered';stateC='color:var(--teal)';}
           else{state='Not covered';stateC='color:var(--t3)';}
-          return`<button onclick="toggleManual(${p.id},'${key}');document.getElementById('pick-overlay').remove();renderAttrs();renderEvid();" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:.5rem .7rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);cursor:pointer;font-size:12.5px;color:var(--t1);text-align:left;transition:background .1s" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background='var(--surface2)'">
-            <span>${p.name}</span>
-            <span style="font-size:11px;${stateC}">${state}</span>
+          return`<button onclick="toggleManual(${p.id},'${key}');document.getElementById('pick-overlay').remove();renderAttrs();renderEvid();" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:.5rem .7rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);cursor:pointer;font-size:12.5px;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background='var(--surface2)'">
+            <span>${p.name}</span><span style="font-size:11px;${stateC}">${state}</span>
           </button>`;
         }).join('')}
       </div>
@@ -744,8 +831,12 @@ function openModal(id){
   document.getElementById('modal-title').textContent=id?'Edit project':'Add project';
   document.getElementById('eid').value=id||'';
   const p=id?projs.find(x=>x.id===id):null;
-  ['name','pis','ifas','rams','gis','other','tech','per','chal'].forEach(f=>{document.getElementById('f-'+f).value=p?(p[f]||''):'';}); 
-  document.querySelectorAll('input[name="tag"]').forEach(cb=>{cb.checked=p?(p.tags||[]).includes(cb.value):false;});
+  ['other','tech','per','chal'].forEach(f=>{document.getElementById('f-'+f).value=p?(p[f]||''):'';}); 
+  document.getElementById('f-rams').value=p?(p.rams||''):'';
+  modalTags=p?[...(p.tags||[])]:[];
+  renderModalTags();
+  document.getElementById('tag-text-input').value='';
+  hideTagSuggestions();
   document.getElementById('modal').classList.add('o');
 }
 function closeModal(){document.getElementById('modal').classList.remove('o');}
@@ -753,9 +844,13 @@ function closeModal(){document.getElementById('modal').classList.remove('o');}
 async function saveProject(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){alert('Please enter a project name.');return;}
+  // finalize any pending tag text
+  const pendingTag=document.getElementById('tag-text-input').value.trim();
+  if(pendingTag&&!modalTags.includes(pendingTag))modalTags.push(pendingTag);
+  document.getElementById('tag-text-input').value='';
   const id=document.getElementById('eid').value;
-  const data={name,tags:[...document.querySelectorAll('input[name="tag"]:checked')].map(c=>c.value)};
-  ['pis','ifas','rams','gis','other','tech','per','chal'].forEach(f=>{data[f]=document.getElementById('f-'+f).value.trim();});
+  const data={name,tags:[...modalTags],rams:parseInt(document.getElementById('f-rams').value)||0};
+  ['other','tech','per','chal'].forEach(f=>{data[f]=document.getElementById('f-'+f).value.trim();});
   closeModal();
   const reflChanged=!id||['tech','per','chal','other'].some(f=>{const p=projs.find(x=>x.id===+id);return p&&p[f]!==data[f];});
   if(id){const i=projs.findIndex(p=>p.id===+id);if(i>-1)projs[i]={...projs[i],...data};}
@@ -774,7 +869,7 @@ function del(id){if(!confirm('Delete this project?'))return;projs=projs.filter(p
 
 /* ── Share / Export / Import ── */
 function openShareModal(){
-  let old=document.getElementById('share-overlay');if(old) old.remove();
+  let old=document.getElementById('share-overlay');if(old)old.remove();
   const overlay=document.createElement('div');
   overlay.id='share-overlay';
   Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
@@ -784,12 +879,11 @@ function openShareModal(){
       <button onclick="document.getElementById('share-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
     <div style="padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.8rem">
-      <div style="font-size:12px;color:var(--t2);line-height:1.5">Anyone who opens this link will see a read-only copy of your projects. They can choose to import it into their own EngPath, or just view it.</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5">Anyone who opens this link will see a read-only copy of your projects.</div>
       <div style="display:flex;gap:6px">
         <input id="share-link" readonly style="flex:1;font-size:11.5px;padding:.5rem .6rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);color:var(--t1)" value="Generating…">
         <button class="btn pr" onclick="copyShareLink()"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
       </div>
-      <div style="font-size:11px;color:var(--t3)">Link too long for some platforms? Download a file instead:</div>
       <button class="btn" style="justify-content:center" onclick="exportFile()"><i class="ti ti-file-export" aria-hidden="true"></i> Download profile file (.json)</button>
     </div>
   </div>`;
@@ -799,63 +893,40 @@ function openShareModal(){
   const link=`${location.origin}${location.pathname}#share=${payload}`;
   document.getElementById('share-link').value=link;
 }
-function buildSharePayload(){
-  const data={name:'EngPath profile',exportedAt:new Date().toISOString(),projs};
-  return btoa(encodeURIComponent(JSON.stringify(data)));
-}
-function copyShareLink(){
-  const el=document.getElementById('share-link');
-  el.select();
-  navigator.clipboard?.writeText(el.value).then(()=>toast('Link copied — send it to anyone')).catch(()=>{document.execCommand('copy');toast('Link copied');});
-}
+function buildSharePayload(){return btoa(encodeURIComponent(JSON.stringify({name:'EngPath profile',exportedAt:new Date().toISOString(),projs})));}
+function copyShareLink(){const el=document.getElementById('share-link');el.select();navigator.clipboard?.writeText(el.value).then(()=>toast('Link copied')).catch(()=>{document.execCommand('copy');toast('Link copied');});}
 function exportFile(){
-  const data={name:'EngPath profile',exportedAt:new Date().toISOString(),projs};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`engpath-profile-${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  toast('Profile downloaded');
+  const blob=new Blob([JSON.stringify({name:'EngPath profile',exportedAt:new Date().toISOString(),projs},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`engpath-profile-${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Profile downloaded');
 }
 function importFile(ev){
   const file=ev.target.files[0];if(!file) return;
   const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const data=JSON.parse(reader.result);
-      handleIncomingProfile(data);
-    }catch(err){console.error('Import failed:',err);alert('Could not read that file — it may not be a valid EngPath profile.');}
-  };
-  reader.readAsText(file);
-  ev.target.value='';
+  reader.onload=()=>{try{handleIncomingProfile(JSON.parse(reader.result));}catch(err){alert('Could not read that file.');}};
+  reader.readAsText(file);ev.target.value='';
 }
 function handleIncomingProfile(data){
-  if(!data||!Array.isArray(data.projs)){alert('That file doesn\'t look like a valid EngPath profile.');return;}
-  const count=data.projs.length;
-  if(!confirm(`This will REPLACE your current ${projs.length} project(s) with the ${count} project(s) from this shared profile. Continue?\n\n(Tip: export your own profile first if you want to keep a backup.)`)) return;
+  if(!data||!Array.isArray(data.projs)){alert('Invalid EngPath profile.');return;}
+  if(!confirm(`Replace your ${projs.length} project(s) with ${data.projs.length} from this profile?`)) return;
   projs=JSON.parse(JSON.stringify(data.projs));
   nid=Math.max(100,...projs.map(p=>p.id||0))+1;
-  projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};});
-  sv();rerender();
-  toast('Profile imported');
+  projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};if(!p.tags)p.tags=[];if(p.rams===undefined)p.rams=0;});
+  sv();rerender();toast('Profile imported');
 }
 function checkIncomingShareLink(){
-  const m=location.hash.match(/share=([^&]+)/);
-  if(!m) return;
+  const m=location.hash.match(/share=([^&]+)/);if(!m) return;
   try{
     const data=JSON.parse(decodeURIComponent(atob(m[1])));
     if(!data||!Array.isArray(data.projs)) return;
     setTimeout(()=>{
-      if(confirm(`This link contains a shared EngPath profile with ${data.projs.length} project(s). Import it now? This will replace your current data.\n\nClick Cancel to keep browsing your own data instead.`)){
-        handleIncomingProfile(data);
-      }
+      if(confirm(`Import shared profile with ${data.projs.length} project(s)?`)){handleIncomingProfile(data);}
       history.replaceState(null,'',location.pathname+location.search);
     },300);
   }catch(err){console.error('Could not parse shared link:',err);}
 }
 
 /* ── Boot ── */
-load();renderDash();checkIncomingShareLink();
+load(); // async — renders inside
 </script>
 </body>
 </html>
