@@ -422,7 +422,7 @@ function toggleAuthMode(){
   authMode=authMode==='signin'?'signup':'signin';
   document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';
   document.getElementById('auth-switch').innerHTML=authMode==='signin'?
-    'Don't have an account? <button onclick="toggleAuthMode()">Sign up</button>':
+    'Don\'t have an account? <button onclick="toggleAuthMode()">Sign up</button>':
     'Already have an account? <button onclick="toggleAuthMode()">Sign in</button>';
   document.getElementById('auth-err').classList.remove('on');
 }
