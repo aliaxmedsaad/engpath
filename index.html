@@ -372,7 +372,7 @@ let modalTags=[];
 
 /* ── Supabase ── */
 const SUPA_URL='https://avmxfiwcgmhxrzdpvmnk.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bXhmaXdjZ21oeHJ6ZHB2bW5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NzYwMzMsImV4cCI6MjA2NjU1MjAzM30.yE3hO7IzPpMHFmFpAiJBvcqfpkel3LEpEdkRYNLpXLc';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bXhmaXdjZ21oeHJ6ZHB2bW5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODcyNDcsImV4cCI6MjA5ODA2MzI0N30.5vU8cqoFn9P6gFeDxsCEVQzumXbalZ6X7LZbvoYF6GA';
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
 // Get or create a stable user ID stored in localStorage
@@ -611,7 +611,7 @@ const WIDGET_DEFS=[
   {id:'rams',l:'Total RAMS',c:'a'},
   {id:'ieng',l:'IEng attrs',c:'g'},
   {id:'ceng',l:'CEng attrs',c:'c'},
-  {id:'tags',l:'Tag summary',c:''},
+  {id:'tags',l:'Tag summary (all tags)',c:''},
 ];
 
 function openDashCustomise(){
@@ -619,19 +619,26 @@ function openDashCustomise(){
   const overlay=document.createElement('div');
   overlay.id='cust-overlay';
   Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
-  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:400px;overflow:hidden">
-    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
+  const tagList=allTags();
+  const tagWidgets=tagList.map(t=>`tag:${t}`);
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:400px;max-height:80vh;overflow-y:auto">
+    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)">
       <div style="font-size:13px;font-weight:500">Customise dashboard</div>
       <button onclick="document.getElementById('cust-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
     <div style="padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.5rem">
-      <div style="font-size:12px;color:var(--t2);margin-bottom:.25rem">Choose what to show on your dashboard:</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem">Metrics</div>
       ${WIDGET_DEFS.map(w=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
         <input type="checkbox" id="wcb-${w.id}" ${dashWidgets.includes(w.id)?'checked':''} style="width:15px;height:15px;cursor:pointer">
         ${w.l}
       </label>`).join('')}
+      ${tagList.length?`<div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-top:.5rem;margin-bottom:.25rem">Pin tags as metric cards</div>
+      ${tagList.map(t=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
+        <input type="checkbox" id="wcb-tag:${t.replace(/'/g,'\'')}" ${dashWidgets.includes('tag:'+t)?'checked':''} style="width:15px;height:15px;cursor:pointer">
+        ${t} <span style="font-size:11px;color:var(--t3)">(project count)</span>
+      </label>`).join('')}`:''}
     </div>
-    <div style="padding:.75rem 1.1rem;border-top:.5px solid var(--b);display:flex;justify-content:flex-end;gap:7px">
+    <div style="padding:.75rem 1.1rem;border-top:.5px solid var(--b);display:flex;justify-content:flex-end;gap:7px;position:sticky;bottom:0;background:var(--surface)">
       <button class="btn" onclick="document.getElementById('cust-overlay').remove()">Cancel</button>
       <button class="btn pr" onclick="saveDashCustomise()">Save</button>
     </div>
@@ -642,6 +649,11 @@ function openDashCustomise(){
 
 function saveDashCustomise(){
   dashWidgets=WIDGET_DEFS.filter(w=>document.getElementById('wcb-'+w.id)?.checked).map(w=>w.id);
+  // Also capture pinned tags
+  allTags().forEach(t=>{
+    const cb=document.getElementById('wcb-tag:'+t);
+    if(cb&&cb.checked) dashWidgets.push('tag:'+t);
+  });
   sv();renderDash();
   document.getElementById('cust-overlay')?.remove();
   toast('Dashboard updated');
@@ -653,18 +665,25 @@ function renderDash(){
   document.getElementById('dash-sub').textContent=`${m.tot} projects · ${m.rams} RAMS`;
   document.getElementById('sb-sub').textContent=`${m.tot} projects`;
 
-  // Metric cards (excluding 'tags' which is rendered separately)
-  const metricWidgets=dashWidgets.filter(w=>w!=='tags');
+  // Metric cards
+  const tc=tagCounts();
   const metricDefs={
     projects:{l:'Projects',v:m.tot,c:''},
     rams:{l:'RAMS',v:m.rams,c:'a'},
     ieng:{l:'IEng attrs',v:`${m.iC}/${m.iT}`,c:'g'},
     ceng:{l:'CEng attrs',v:`${m.cC}/${m.cT}`,c:'c'},
   };
-  document.getElementById('dash-metrics').innerHTML=metricWidgets
-    .filter(w=>metricDefs[w])
-    .map(w=>{const d=metricDefs[w];return`<div class="mc"><div class="ml">${d.l}</div><div class="mv ${d.c}">${d.v}</div></div>`;})
-    .join('');
+  const metricCards=dashWidgets
+    .filter(w=>w!=='tags')
+    .map(w=>{
+      if(metricDefs[w]){const d=metricDefs[w];return`<div class="mc"><div class="ml">${d.l}</div><div class="mv ${d.c}">${d.v}</div></div>`;}
+      if(w.startsWith('tag:')){
+        const t=w.slice(4);const n=tc[t]||0;const cl=tagColor(t);
+        return`<div class="mc"><div class="ml" style="color:${CT[cl]}">${t}</div><div class="mv" style="color:${CT[cl]}">${n} <span style="font-size:13px;opacity:.6">proj</span></div></div>`;
+      }
+      return '';
+    }).join('');
+  document.getElementById('dash-metrics').innerHTML=metricCards;
 
   // Tag summary
   const tagEl=document.getElementById('dash-tag-summary');
@@ -680,7 +699,8 @@ function renderDash(){
   } else {tagEl.innerHTML='';}
 
   document.getElementById('sb-projs').innerHTML=projs.map(p=>`<button class="pnav" onclick="jumpTo(${p.id})"><span class="pdot"></span>${p.name}</button>`).join('');
-  document.getElementById('dash-list').innerHTML=[...projs].slice(-5).reverse().map(cardH).join('');
+  const recent=[...projs].slice(-3).reverse();
+  document.getElementById('dash-list').innerHTML=recent.map(cardH).join('')+(projs.length>3?`<button onclick="go('projects',document.getElementById('n-projects'))" style="margin-top:8px;font-size:12.5px;color:var(--blue);background:none;border:none;cursor:pointer;padding:.3rem 0;display:block">Show all ${projs.length} projects →</button>`:'');
 }
 
 /* ── Render projects ── */
