@@ -56,10 +56,19 @@ app.post('/api/map', rateLimit, async (req, res) => {
   }
 
   try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+    console.log('===== GEMINI DEBUG =====');
+    console.log('Endpoint:', endpoint);
+    console.log('Model:', MODEL);
+    console.log('API key present:', !!process.env.GEMINI_API_KEY);
+    console.log('API key length:', process.env.GEMINI_API_KEY?.length);
+    console.log('Using x-goog-api-key header:', true);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      endpoint,
       {
         method: 'POST',
         headers: {
@@ -79,7 +88,11 @@ app.post('/api/map', rateLimit, async (req, res) => {
     );
     clearTimeout(timeout);
 
+    console.log('Gemini HTTP status:', response.status);
+
     const raw = await response.text();
+    console.log('Gemini response body:', raw.slice(0, 500));
+
     let data;
     try {
       data = raw ? JSON.parse(raw) : {};
