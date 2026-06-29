@@ -626,7 +626,7 @@ Rules:
   try{
     const BACKEND_URL=['localhost','127.0.0.1'].includes(location.hostname)?'http://localhost:3000/api/map':'https://engpath-backend.onrender.com/api/map';
     const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    if(!r.ok){console.error('aiMap: API request failed',r.status,await r.text());return kwFallback(proj);}
+    if(!r.ok){let errMsg='AI analysis failed — please try again.';try{const errData=await r.json();if(errData&&errData.error)errMsg=errData.error;}catch(_){}console.error('aiMap: API request failed',r.status,errMsg);toast(errMsg);return [];}
     const d=await r.json();
     let t=d.text||'{}';
     t=t.replace(/```json|```/g,'').trim();
@@ -1149,7 +1149,7 @@ async function analyseProject(id){
   const keep=(p.evidenceItems||[]).filter(e=>(e.userEdited||e.userApproved)&&!e.userRejected);
   p.evidenceItems=keep.concat(items);
   p.aiMap={};
-  items.forEach(e=>{p.aiMap[e.attributeKey]=e.evidence;});
+  if(Array.isArray(items))items.forEach(e=>{p.aiMap[e.attributeKey]=e.evidence;});
   p.aiAnalysedAt=nowIso();
   await sv();rerender();
   toast(`AI added ${items.length} evidence item${items.length===1?'':'s'}`);
