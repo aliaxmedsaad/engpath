@@ -2,7 +2,7 @@
 
 ## V0 — Original Prototype
 
-**Status: Deployed (currently live on GitHub Pages)**
+**Status: Superseded**
 
 The initial proof-of-concept. Engineers could enter project information and receive a basic AI-assisted mapping to ICE attributes. Data was stored in a simple format in Supabase.
 
@@ -10,17 +10,17 @@ The initial proof-of-concept. Engineers could enter project information and rece
 - Simple AI attribute tagging
 - Minimal UI
 
-> The V0 frontend (`index.html`) is still what GitHub Pages serves. It has not yet been replaced by V1.
+> V0 (`index.html`) has been replaced by V1. It is no longer served on GitHub Pages.
 
 ---
 
 ## V1 — Structured Evidence Upgrade
 
-**Status: Built, stabilising — not yet live on GitHub Pages**
+**Status: Live on GitHub Pages and Render**
 
-A significant rework of the data model and user workflow.
+A significant rework of the data model and user workflow. V1 is now the production version.
 
-Key changes:
+### Features delivered
 - Evidence is now stored as structured objects, not simple tags
 - AI analysis is triggered manually (not automatic)
 - Evidence page grouped by ICE attribute
@@ -29,30 +29,33 @@ Key changes:
 - Migration support for V0 project data
 - Improved escaping of user-generated content
 
-> V1 lives in `engpath.html`. It will be promoted to `index.html` once stabilisation is complete.
+### Deployment milestones
+- V1 frontend (`engpath.html`) promoted to `index.html` and deployed to GitHub Pages
+- Backend deployed to Render with auto-deploy from `main`
+- Gemini API endpoint corrected to `v1beta/models/{model}:generateContent`
+- Gemini model updated to `gemini-2.0-flash` (confirmed working on v1beta)
+- Gemini authentication fixed — `x-goog-api-key` header correctly applied
+- Frontend crash on non-200 backend responses fixed (`items.forEach` TypeError resolved)
+
+### Known issue at close
+- Gemini free tier returning HTTP 429 under quota pressure. External dependency — not a blocker. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) ISSUE-009.
 
 ---
 
-## V1.1 — Stabilisation (Planned)
+## V2 — UI & User Experience Polish
 
-Targeted fixes for security, bugs, and UX issues identified during V1 development.
+**Status: Active**
 
-See [ROADMAP.md](ROADMAP.md) for the full list.
-
----
-
-## V1.2 — Export (Planned)
-
-Word and PDF export of structured evidence.
+Focus is refinement and polish, not new features. See [ROADMAP.md](ROADMAP.md) for full scope.
 
 ---
 
-## V2 — AI Career Coach (Future idea)
+## V3 — AI Enhancements (Planned)
 
-AI chat, readiness score, experience gap analysis.
+Improved AI quality, additional disciplines, expanded engineering content.
 
 ---
 
-## V3 — Team Accounts (Future idea)
+## V4 — Team & Mentor Accounts (Future idea)
 
 Mentor dashboards, company accounts, approval workflows.

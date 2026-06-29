@@ -1,36 +1,28 @@
 # Known Issues
 
-Issues identified as of 2026-06-29. Priorities: **Critical**, **High**, **Medium**, **Low**.
+Last updated: 2026-06-30. Priorities: **Critical**, **High**, **Medium**, **Low**.
 
 ---
 
 ## ISSUE-001 — Wrong Frontend Deployed on GitHub Pages
 
 **Priority: High**
-**Status: Open**
+**Status: Resolved**
 
-GitHub Pages is serving the old `index.html` (V0 prototype). V1 is in `engpath.html` and has not been promoted.
+~~GitHub Pages was serving the old `index.html` (V0 prototype). V1 is in `engpath.html` and had not been promoted.~~
 
-**Action required:**
-1. Rename `index.html` → `index-v0-backup.html`
-2. Rename `engpath.html` → `index.html`
-3. Commit and push — GitHub Pages will serve V1 automatically
+V1 (`engpath.html`) has been promoted to `index.html` and is now live on GitHub Pages.
 
 ---
 
 ## ISSUE-002 — Gemini Endpoint / Model Unverified
 
 **Priority: Critical**
-**Status: Open**
+**Status: Resolved**
 
-The backend `server.js` calls a Gemini API endpoint and model that have not been confirmed with a live smoke test. The endpoint URL and model name may be incorrect.
+~~The backend `server.js` called a Gemini API endpoint and model that had not been confirmed with a live smoke test.~~
 
-**Action required:**
-- Run `npm run test:gemini` against the real API with a valid key
-- Verify the response is well-formed before changing any API code
-- Update `GEMINI_MODEL` env var on Render if needed
-
-> Do not change API code based on assumptions. Test first.
+Endpoint corrected to `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`. Model confirmed working. Authentication fixed. Backend successfully reaching Gemini.
 
 ---
 
@@ -92,7 +84,7 @@ Running AI analysis on a project that has already been analysed may append dupli
 **Priority: Medium**
 **Status: Open**
 
-Editing evidence items currently uses the browser's built-in `prompt()` dialog, which is a poor UX and cannot be styled or validated properly.
+Editing evidence items currently uses the browser's built-in `prompt()` dialog, which is poor UX and cannot be styled or validated properly.
 
 **Action required:**
 - Replace with inline form editing or a modal dialog
@@ -109,3 +101,24 @@ Row Level Security (RLS) policies on Supabase tables have not been formally veri
 **Action required:**
 - Review RLS policies in the Supabase dashboard
 - Write and run tests that confirm a user cannot access another user's projects
+
+---
+
+## ISSUE-009 — Gemini HTTP 429 (Quota / Rate Limit)
+
+**Priority: Medium**
+**Status: Open — external dependency**
+
+The Gemini free tier is returning HTTP 429 responses under quota pressure. The backend is functioning correctly — the endpoint, model, authentication, and request format have all been verified. This is a limitation of the Google AI free tier.
+
+**Current behaviour:**
+- Backend receives 429 from Gemini
+- Frontend displays the error message to the user gracefully (crash fixed as of V1)
+- No data is lost; the user can retry manually
+
+**Action required:**
+- Monitor Google AI Studio quota usage
+- Consider upgrading to a paid Gemini tier when the product moves beyond personal testing
+- Development and UI work continues independently of this issue
+
+> This issue does not block V2 development.

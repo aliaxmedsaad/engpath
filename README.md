@@ -12,11 +12,11 @@ Graduate civil engineers working towards ICE Chartership who want a structured, 
 
 ## Current Status
 
-**V1 — active development / stabilisation phase.**
+**V1 complete. V2 (UI & UX Polish) in active development.**
 
-Core features are working but several known issues remain before V1 is considered stable. See [docs/01_Project/KNOWN_ISSUES.md](docs/01_Project/KNOWN_ISSUES.md).
+V1 is live — frontend deployed on GitHub Pages, backend deployed on Render, Gemini integration working. See [docs/01_Project/VERSION_HISTORY.md](docs/01_Project/VERSION_HISTORY.md) for what was delivered.
 
-> Note: The live GitHub Pages site is currently serving `index.html` (V0 prototype). V1 is in `engpath.html` and has not yet been promoted to production. See deployment section below.
+> **Note:** Gemini free tier is currently returning HTTP 429 under quota pressure. The backend is functioning correctly. Development continues independently. See [docs/01_Project/KNOWN_ISSUES.md](docs/01_Project/KNOWN_ISSUES.md) — ISSUE-009.
 
 ## Tech Stack
 
@@ -25,7 +25,7 @@ Core features are working but several known issues remain before V1 is considere
 | Frontend | Vanilla HTML/CSS/JS, hosted on GitHub Pages |
 | Backend | Node.js / Express, hosted on Render |
 | Auth / Database | Supabase |
-| AI Analysis | Google Gemini API (via backend proxy) |
+| AI Analysis | Google Gemini API (`gemini-2.0-flash`, via backend proxy) |
 | Source Control | GitHub |
 
 ## Local Setup
@@ -44,7 +44,7 @@ npm install
 
 # Set environment variables (create a .env file or export manually)
 GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-2.0-flash   # To verify — see known issues
+GEMINI_MODEL=gemini-2.0-flash
 ALLOWED_ORIGINS=http://localhost:5500,https://yourusername.github.io
 PORT=3000
 
@@ -60,13 +60,13 @@ npm run test:gemini
 
 ### Frontend
 
-The frontend is a single HTML file. Open `engpath.html` in a browser or serve it with any static server (e.g. VS Code Live Server). Point the Supabase and backend URLs to your local/staging instances.
+The frontend is a single HTML file (`index.html`). Open it in a browser or serve it with any static server (e.g. VS Code Live Server). Point the Supabase and backend URLs to your local/staging instances.
 
 ## Deployment Overview
 
 | Component | Host | Notes |
 |---|---|---|
-| Frontend | GitHub Pages | Serves `index.html` from the repo root |
+| Frontend | GitHub Pages | Serves `index.html` from the repo root — auto-deploys on push to `main` |
 | Backend | Render | Auto-deploys from `main` branch |
 | Database / Auth | Supabase | Managed cloud service |
 

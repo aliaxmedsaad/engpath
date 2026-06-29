@@ -4,15 +4,34 @@ Format: version, date, summary of changes.
 
 ---
 
-## [Unreleased] — V1.1 Stabilisation
+## [Unreleased] — V2 UI & UX Polish
 
-Planned fixes. See [ROADMAP.md](../01_Project/ROADMAP.md) and [KNOWN_ISSUES.md](../01_Project/KNOWN_ISSUES.md).
+In progress. See [ROADMAP.md](../01_Project/ROADMAP.md) for scope.
+
+---
+
+## [1.1.0] — V1 Deployment & Stabilisation — 2026-06-30
+
+### Fixed
+- Gemini API endpoint corrected from `/v1beta/interactions` to `/v1beta/models/gemini-2.0-flash:generateContent`
+- Gemini model updated to `gemini-2.0-flash` — previous model (`gemini-1.5-flash`) removed from v1beta
+- Gemini authentication confirmed working — `x-goog-api-key` header correctly passed
+- Frontend crash fixed: `aiMap()` was returning `kwFallback()` (an object `{}`) on non-200 responses, causing `items.forEach is not a function` TypeError in `analyseProject()`
+- Non-200 backend responses now surface the error message to the user via toast instead of crashing
+
+### Deployed
+- V1 frontend (`engpath.html`) promoted to `index.html` — now live on GitHub Pages
+- Backend live on Render with auto-deploy from `main`
+- Single POST request per button click confirmed (no duplicate calls)
+
+### Added
+- Temporary debug logging in backend (`===== GEMINI DEBUG =====`) to assist with authentication diagnosis
 
 ---
 
 ## [1.0.0] — V1 Structured Evidence — 2025
 
-**Status: Built — not yet live on GitHub Pages**
+**Status: Live**
 
 ### Added
 - Structured evidence objects with title, description, ICE attribute, source, and status fields
@@ -26,14 +45,11 @@ Planned fixes. See [ROADMAP.md](../01_Project/ROADMAP.md) and [KNOWN_ISSUES.md](
 - Evidence is now stored as structured objects rather than simple attribute tags
 - Improved escaping of user-generated content throughout the frontend
 
-### Known issues at release
-- See [KNOWN_ISSUES.md](../01_Project/KNOWN_ISSUES.md) for the full list
-
 ---
 
 ## [0.1.0] — V0 Prototype — 2025
 
-**Status: Live on GitHub Pages (currently served as index.html)**
+**Status: Superseded by V1**
 
 ### Added
 - Basic project input fields
