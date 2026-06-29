@@ -267,6 +267,7 @@ td:first-child{color:var(--t1);font-weight:500}
       </div>
       <div class="metrics" id="dash-metrics"></div>
       <div id="dash-tag-summary"></div>
+      <div id="dash-insights"></div>
       <div class="sh">Recent projects</div>
       <div class="plist" id="dash-list"></div>
     </div>
@@ -334,6 +335,15 @@ td:first-child{color:var(--t1);font-weight:500}
     <div class="mb">
       <input type="hidden" id="eid">
       <div class="field"><label>Project name</label><input type="text" id="f-name" placeholder="e.g. Slough"></div>
+      <div class="frow">
+        <div class="field"><label>Date / date range</label><input type="text" id="f-dateRange" placeholder="e.g. Jan 2026 - Mar 2026"></div>
+        <div class="field"><label>Employer or client</label><input type="text" id="f-client" placeholder="e.g. Thames Water"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>User role</label><input type="text" id="f-role" placeholder="e.g. Graduate engineer"></div>
+        <div class="field"><label>Project type</label><input type="text" id="f-projectType" placeholder="e.g. Rail, water, highways"></div>
+      </div>
+      <div class="field"><label>Location</label><input type="text" id="f-location" placeholder="e.g. Oxford"></div>
       <div class="field">
         <label>Tags</label>
         <div class="tag-input-wrap" id="tag-input-wrap" onclick="document.getElementById('tag-text-input').focus()">
@@ -341,12 +351,15 @@ td:first-child{color:var(--t1);font-weight:500}
         </div>
         <div id="tag-suggestions" style="display:none;margin-top:4px;background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r-sm);overflow:hidden"></div>
       </div>
-      <div class="field"><label>Notes / activities</label><textarea id="f-other" placeholder="e.g. Calculations, Validation, Planning…"></textarea></div>
       <div class="field"><label>RAMS count</label><input type="number" id="f-rams" placeholder="e.g. 117" min="0"></div>
-      <div class="field"><label>Technical reflection</label><textarea id="f-tech" placeholder="What technical skills did you use or develop?"></textarea></div>
-      <div class="field"><label>Personal reflection</label><textarea id="f-per" placeholder="What did you learn about yourself or working with others?"></textarea></div>
-      <div class="field"><label>Challenges</label><textarea id="f-chal" placeholder="What was difficult, and how did you handle it?"></textarea></div>
-      <div class="ai-note"><i class="ti ti-sparkles" aria-hidden="true"></i> After saving, AI will map your reflections to ICE attributes automatically.</div>
+      <div class="field"><label>Responsibilities</label><textarea id="f-responsibilities" placeholder="What were you personally responsible for?"></textarea></div>
+      <div class="field"><label>Main project description</label><textarea id="f-description" placeholder="What was the project and its purpose?"></textarea></div>
+      <div class="field"><label>Reflection</label><textarea id="f-reflection" placeholder="What did you do, decide, communicate, or learn?"></textarea></div>
+      <div class="field"><label>Lessons learned</label><textarea id="f-lessonsLearned" placeholder="What would you repeat or improve next time?"></textarea></div>
+      <div class="field"><label>Outcomes / impact</label><textarea id="f-outcomes" placeholder="What changed because of your work? Include numbers if possible."></textarea></div>
+      <div class="field"><label>Documents / photos</label><textarea id="f-documents" placeholder="Links or notes about evidence files, if any."></textarea></div>
+      <div class="field"><label>Legacy notes / activities</label><textarea id="f-other" placeholder="Existing notes are kept here."></textarea></div>
+      <div class="ai-note"><i class="ti ti-sparkles" aria-hidden="true"></i> Save first, then use Analyse with AI on the project card when you want to spend an API call.</div>
     </div>
     <div class="mf">
       <button class="btn" onclick="closeModal()">Cancel</button>
@@ -401,7 +414,7 @@ const DEFS=[
 ];
 
 /* ── Dashboard widget config ── */
-const DEFAULT_WIDGETS=['projects','rams','tags','ieng','ceng'];
+const DEFAULT_WIDGETS=['projects','evidence','rams','tags','ieng','ceng'];
 let dashWidgets=[];
 
 /* ── State ── */
@@ -481,15 +494,15 @@ async function load(){
       const saved=data.data;
       projs=saved.projs||[];
       nid=saved.nid||100;
-      projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};if(!p.tags)p.tags=[];if(p.rams===undefined)p.rams=0;});
+      projs.forEach(migrateProject);
     } else {
       // First time — use defaults
-      projs=JSON.parse(JSON.stringify(DEFS));
+      projs=JSON.parse(JSON.stringify(DEFS)).map(migrateProject);
       await sv();
     }
   }catch(e){
     console.error('Load error:',e);
-    projs=JSON.parse(JSON.stringify(DEFS));
+    projs=JSON.parse(JSON.stringify(DEFS)).map(migrateProject);
     dashWidgets=[...DEFAULT_WIDGETS];
   }
   renderDash();
@@ -505,24 +518,113 @@ async function sv(){
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
 
+const PROJECT_FIELDS=['dateRange','client','role','projectType','location','responsibilities','description','reflection','lessonsLearned','outcomes','documents'];
+const AI_SOURCE_FIELDS=['responsibilities','description','reflection','lessonsLearned','outcomes'];
+function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function uid(prefix='ev'){return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;}
+function nowIso(){return new Date().toISOString();}
+function attrName(key){
+  const parts=String(key||'').split('_');const mode=parts[0],gNum=+parts[1],idx=+parts[2];
+  const g=ICE[mode]?.find(x=>x.g===gNum);
+  return g?.a?.[idx]||key;
+}
+function attrGroupName(key){
+  const parts=String(key||'').split('_');const mode=parts[0],gNum=+parts[1];
+  return ICE[mode]?.find(x=>x.g===gNum)?.n||'ICE attribute';
+}
+function allAttrKeys(){
+  const keys=[];
+  ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>g.a.forEach((a,i)=>keys.push({key:`${lvl}_${g.g}_${i}`,text:a,group:g.n}))));
+  return keys;
+}
+function migrateProject(p){
+  PROJECT_FIELDS.forEach(f=>{if(p[f]===undefined)p[f]='';});
+  if(!p.reflection){
+    p.reflection=[p.tech,p.per,p.chal].filter(Boolean).join('\n\n');
+  }
+  if(!p.description&&p.other)p.description=p.other;
+  if(!p.evidenceItems)p.evidenceItems=[];
+  if(!p.manMap)p.manMap={};
+  if(!p.aiMap)p.aiMap={};
+  if(!p.tags)p.tags=[];
+  if(p.rams===undefined)p.rams=0;
+  Object.entries(p.aiMap||{}).forEach(([key,snip])=>{
+    if((p.evidenceItems||[]).some(e=>e.attributeKey===key&&e.evidence===snip)) return;
+    p.evidenceItems.push({
+      id:uid('old'),projectId:p.id,attributeKey:key,attributeName:attrName(key),evidence:String(snip||''),
+      rationale:'Migrated from earlier AI mapping.',confidence:50,strength:'Medium',weakness:'',
+      suggestedImprovement:'Review and expand this evidence if needed.',sourceField:'reflection',
+      aiGenerated:true,userApproved:false,userEdited:false,userRejected:false,createdAt:nowIso(),updatedAt:nowIso()
+    });
+  });
+  return p;
+}
+function projectTextForAi(p){
+  return AI_SOURCE_FIELDS.map(f=>({field:f,text:String(p[f]||'').trim()})).filter(x=>x.text);
+}
+function allEvidence(includeRejected=false){
+  return projs.flatMap(p=>(p.evidenceItems||[]).map(e=>({...e,projectId:p.id,projectName:p.name}))).filter(e=>includeRejected||!e.userRejected);
+}
+function evidenceForProject(p,includeRejected=false){return (p.evidenceItems||[]).filter(e=>includeRejected||!e.userRejected);}
+function evidenceSummary(){
+  const ev=allEvidence();
+  const byAttr={};
+  ev.forEach(e=>{
+    const b=byAttr[e.attributeKey]||(byAttr[e.attributeKey]={total:0,Strong:0,Medium:0,Weak:0,items:[]});
+    b.total++;b[e.strength||'Medium']=(b[e.strength||'Medium']||0)+1;b.items.push(e);
+  });
+  return {items:ev,byAttr};
+}
+
 /* ── AI mapping ── */
 async function aiMap(proj){
-  const txt=[proj.tech,proj.per,proj.chal,proj.other].filter(Boolean).join('\n');
-  if(!txt.trim()) return {};
-  const list=[];
-  ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>g.a.forEach((a,i)=>list.push({key:`${lvl}_${g.g}_${i}`,text:a}))));
-  const prompt=`You are an ICE professional qualification adviser. A trainee engineer wrote:
+  const sourceBlocks=projectTextForAi(proj);
+  if(!sourceBlocks.length) return [];
+  const list=allAttrKeys();
+  const prompt=`You are an ICE Professional Review adviser reviewing evidence for a trainee civil engineer.
 
-"${txt}"
+Task:
+- Read all project fields before deciding.
+- Match only ICE attributes that are directly supported by exact text in the user's fields.
+- Extract exact evidence from the user's text; do not invent facts or infer beyond the text.
+- Include weak evidence if it is relevant, but clearly state what is missing.
+- Use only attribute keys from the provided ICE attributes list.
 
-Tags: ${(proj.tags||[]).join(', ')||'none'}, RAMS: ${proj.rams||0}
+Project fields:
+${JSON.stringify(sourceBlocks)}
+
+Project metadata:
+${JSON.stringify({tags:proj.tags||[],rams:proj.rams||0,role:proj.role||'',type:proj.projectType||'',location:proj.location||''})}
 
 ICE attributes:
 ${JSON.stringify(list)}
 
-Return ONLY a JSON object where keys are attribute keys and values are short evidence strings (max 20 words each, be concise). Only include genuinely evidenced attributes — do not force matches that aren't really supported by the text. No markdown, no explanation, no text before or after the JSON object.`;
+Return ONLY valid JSON in this exact shape:
+{
+  "evidenceItems": [
+    {
+      "attributeKey": "string",
+      "attributeName": "string",
+      "evidence": "exact sentence or paragraph from the project fields",
+      "rationale": "why this evidence matches the attribute",
+      "confidence": 0,
+      "strength": "Strong",
+      "weakness": "what is missing or vague",
+      "suggestedImprovement": "how the user can improve the reflection",
+      "sourceField": "reflection"
+    }
+  ]
+}
+
+Rules:
+- confidence must be 0-100.
+- strength must be exactly Strong, Medium, or Weak.
+- sourceField must be one of responsibilities, description, reflection, lessonsLearned, outcomes.
+- If evidence is weak, explain whether it lacks personal action, technical judgement, impact/outcome, numbers/details, standards used, collaboration/communication, safety/commercial/sustainability impact, or another specific gap.
+- Do not include evidence that is not copied from the project fields.
+- No markdown, comments, explanation, or text outside the JSON object.`;
   try{
-    const BACKEND_URL='https://engpath-backend.onrender.com/api/map';
+    const BACKEND_URL=['localhost','127.0.0.1'].includes(location.hostname)?'http://localhost:3000/api/map':'https://engpath-backend.onrender.com/api/map';
     const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
     if(!r.ok){console.error('aiMap: API request failed',r.status,await r.text());return kwFallback(proj);}
     const d=await r.json();
@@ -532,8 +634,33 @@ Return ONLY a JSON object where keys are attribute keys and values are short evi
     if(first>-1&&last>first) t=t.slice(first,last+1);
     const parsed=JSON.parse(t);
     if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('not an object');
-    return parsed;
-  }catch(err){console.error('aiMap failed, falling back:',err);return kwFallback(proj);}
+    return normaliseAiMap(parsed,list,proj);
+  }catch(err){console.error('aiMap failed:',err);return [];}
+}
+
+
+function normaliseAiMap(parsed,list,proj){
+  const valid=new Set(list.map(item=>item.key));
+  const byKey=Object.fromEntries(list.map(item=>[item.key,item.text]));
+  const sourceSet=new Set(AI_SOURCE_FIELDS);
+  const rawItems=Array.isArray(parsed.evidenceItems)?parsed.evidenceItems:Object.entries(parsed).map(([attributeKey,evidence])=>({attributeKey,evidence}));
+  const out=[];
+  rawItems.forEach(item=>{
+    const key=String(item.attributeKey||'').trim();
+    if(!valid.has(key)) return;
+    const evidence=String(item.evidence||'').replace(/\s+/g,' ').trim();
+    if(!evidence) return;
+    const strength=['Strong','Medium','Weak'].includes(item.strength)?item.strength:'Medium';
+    const confidence=Math.max(0,Math.min(100,parseInt(item.confidence)||0));
+    const sourceField=sourceSet.has(item.sourceField)?item.sourceField:'reflection';
+    out.push({
+      id:uid('ai'),projectId:proj.id,attributeKey:key,attributeName:item.attributeName||byKey[key]||attrName(key),
+      evidence:evidence,rationale:String(item.rationale||'').trim(),confidence,strength,
+      weakness:String(item.weakness||'').trim(),suggestedImprovement:String(item.suggestedImprovement||'').trim(),
+      sourceField,aiGenerated:true,userApproved:false,userEdited:false,userRejected:false,createdAt:nowIso(),updatedAt:nowIso()
+    });
+  });
+  return out;
 }
 
 function kwFallback(proj){
@@ -550,17 +677,18 @@ function kwFallback(proj){
 function effectiveCov(mode){
   const m={};
   projs.forEach(p=>{
-    const am=p.aiMap||{};const mm=p.manMap||{};
-    Object.entries(am).forEach(([k,s])=>{
+    const mm=p.manMap||{};
+    evidenceForProject(p).forEach(item=>{
+      const k=item.attributeKey;
       if(!k.startsWith(mode+'_')) return;
       if(mm[k]===false) return;
       if(!m[k]) m[k]=[];
-      m[k].push({proj:p.name,snip:s,type:'ai'});
+      m[k].push({proj:p.name,snip:item.evidence,type:item.aiGenerated?'ai':'manual',item});
     });
     Object.entries(mm).forEach(([k,v])=>{
       if(!k.startsWith(mode+'_')||v!==true) return;
       if(!m[k]) m[k]=[];
-      if(!m[k].find(e=>e.proj===p.name&&e.type==='ai'))
+      if(!m[k].find(e=>e.proj===p.name))
         m[k].push({proj:p.name,snip:'Manually confirmed as evidenced.',type:'manual'});
     });
   });
@@ -591,7 +719,7 @@ const CT={tpi:'var(--blue-t)',tia:'var(--teal-t)',tra:'var(--amber)',tgi:'var(--
 function tagH(tags){
   return(tags||[]).map(t=>{
     const c=tagColor(t);
-    return`<span class="tag" style="background:${CC[c]};color:${CT[c]}">${t}</span>`;
+    return`<span class="tag" style="background:${CC[c]};color:${CT[c]}">${esc(t)}</span>`;
   }).join('');
 }
 
@@ -604,7 +732,7 @@ function renderModalTags(){
   modalTags.forEach((t,i)=>{
     const pill=document.createElement('span');
     pill.className='tag-pill';
-    pill.innerHTML=`${t}<button onclick="removeModalTag(${i})" type="button"><i class="ti ti-x"></i></button>`;
+    pill.innerHTML=`${esc(t)}<button onclick="removeModalTag(${i})" type="button"><i class="ti ti-x"></i></button>`;
     wrap.insertBefore(pill,inp);
   });
 }
@@ -627,7 +755,7 @@ function showTagSuggestions(val){
   const matches=allTags().filter(t=>t.toLowerCase().includes(val.toLowerCase())&&!modalTags.includes(t));
   if(!matches.length){box.style.display='none';return;}
   box.style.display='block';
-  box.innerHTML=matches.map(t=>`<button onclick="selectTagSuggestion('${t.replace(/'/g,"\\'")}');" style="display:block;width:100%;text-align:left;padding:.35rem .65rem;font-size:12.5px;background:none;border:none;cursor:pointer;color:var(--t1)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">${t}</button>`).join('');
+  box.innerHTML=matches.map(t=>`<button onclick="selectTagSuggestion('${t.replace(/'/g,"\\'")}');" style="display:block;width:100%;text-align:left;padding:.35rem .65rem;font-size:12.5px;background:none;border:none;cursor:pointer;color:var(--t1)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">${esc(t)}</button>`).join('');
 }
 function selectTagSuggestion(t){
   if(!modalTags.includes(t))modalTags.push(t);
@@ -637,37 +765,43 @@ function selectTagSuggestion(t){
 }
 function hideTagSuggestions(){document.getElementById('tag-suggestions').style.display='none';}
 
-/* ── ICE labels ── */
+/* ICE labels */
 function iceLabels(p){
   const s=new Set();
-  ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>{
-    if(g.a.some((_,i)=>{
-      const k=`${lvl}_${g.g}_${i}`;
-      const ai=!!(p.aiMap&&p.aiMap[k]);const mm=(p.manMap||{})[k];
-      return(ai&&mm!==false)||(mm===true);
-    })) s.add(`A${g.g}`);
-  }));
+  evidenceForProject(p).forEach(e=>{const parts=String(e.attributeKey||'').split('_');if(parts[1])s.add(`A${parts[1]}`);});
+  Object.entries(p.manMap||{}).forEach(([k,v])=>{if(v===true){const parts=k.split('_');if(parts[1])s.add(`A${parts[1]}`);}});
   return[...s].sort();
 }
 
-/* ── Card HTML ── */
+/* Card HTML */
 function cardH(p){
   const isO=expId===p.id;
-  const hasr=p.tech||p.per||p.chal;
+  const hasr=AI_SOURCE_FIELDS.some(f=>p[f])||p.documents;
   const lbls=iceLabels(p);
+  const evCount=evidenceForProject(p).length;
   const dboxes=[
-    p.rams?`<div class="dbox"><div class="dl">RAMS</div><div class="dv">${p.rams}</div></div>`:'',
-    p.other?`<div class="dbox" style="grid-column:1/-1"><div class="dl">Notes / Activities</div><div class="dv">${p.other}</div></div>`:''
+    p.dateRange?`<div class="dbox"><div class="dl">Date</div><div class="dv">${esc(p.dateRange)}</div></div>`:'',
+    p.client?`<div class="dbox"><div class="dl">Employer / client</div><div class="dv">${esc(p.client)}</div></div>`:'',
+    p.role?`<div class="dbox"><div class="dl">Role</div><div class="dv">${esc(p.role)}</div></div>`:'',
+    p.projectType?`<div class="dbox"><div class="dl">Type</div><div class="dv">${esc(p.projectType)}</div></div>`:'',
+    p.location?`<div class="dbox"><div class="dl">Location</div><div class="dv">${esc(p.location)}</div></div>`:'',
+    p.rams?`<div class="dbox"><div class="dl">RAMS</div><div class="dv">${esc(p.rams)}</div></div>`:'',
+    p.other?`<div class="dbox" style="grid-column:1/-1"><div class="dl">Legacy notes</div><div class="dv">${esc(p.other)}</div></div>`:'',
+    evCount?`<div class="dbox"><div class="dl">Evidence items</div><div class="dv">${evCount}</div></div>`:''
   ].filter(Boolean).join('');
   const rflH=hasr?`<div class="rfl-sec">
-    ${p.tech?`<div><div class="rfl-h"><i class="ti ti-tool" aria-hidden="true"></i> Technical</div><div class="rfl-t">${p.tech}</div></div>`:''}
-    ${p.per?`<div><div class="rfl-h"><i class="ti ti-user" aria-hidden="true"></i> Personal</div><div class="rfl-t">${p.per}</div></div>`:''}
-    ${p.chal?`<div><div class="rfl-h"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Challenges</div><div class="rfl-t">${p.chal}</div></div>`:''}
-  </div>`:`<p class="rfl-nil">No reflections yet — click Edit to add them.</p>`;
-  const iceH=lbls.length?`<div class="ice-row">${lbls.map(l=>`<span class="ice-m">ICE ${l}</span>`).join('')}</div>`:'';
+    ${p.responsibilities?`<div><div class="rfl-h"><i class="ti ti-list-check" aria-hidden="true"></i> Responsibilities</div><div class="rfl-t">${esc(p.responsibilities)}</div></div>`:''}
+    ${p.description?`<div><div class="rfl-h"><i class="ti ti-file-description" aria-hidden="true"></i> Description</div><div class="rfl-t">${esc(p.description)}</div></div>`:''}
+    ${p.reflection?`<div><div class="rfl-h"><i class="ti ti-user" aria-hidden="true"></i> Reflection</div><div class="rfl-t">${esc(p.reflection)}</div></div>`:''}
+    ${p.lessonsLearned?`<div><div class="rfl-h"><i class="ti ti-bulb" aria-hidden="true"></i> Lessons learned</div><div class="rfl-t">${esc(p.lessonsLearned)}</div></div>`:''}
+    ${p.outcomes?`<div><div class="rfl-h"><i class="ti ti-chart-line" aria-hidden="true"></i> Outcomes / impact</div><div class="rfl-t">${esc(p.outcomes)}</div></div>`:''}
+    ${p.documents?`<div><div class="rfl-h"><i class="ti ti-paperclip" aria-hidden="true"></i> Documents / photos</div><div class="rfl-t">${esc(p.documents)}</div></div>`:''}
+  </div>`:`<p class="rfl-nil">No reflections yet - click Edit to add them.</p>`;
+  const iceH=lbls.length?`<div class="ice-row">${lbls.map(l=>`<span class="ice-m">ICE ${esc(l)}</span>`).join('')}</div>`:'';
+  const aiBtn=evCount?`<button class="btn" onclick="analyseProject(${p.id})"><i class="ti ti-refresh" aria-hidden="true"></i> Re-analyse with AI</button>`:`<button class="btn" onclick="analyseProject(${p.id})"><i class="ti ti-sparkles" aria-hidden="true"></i> Analyse with AI</button>`;
   return`<div class="pcard" id="card-${p.id}">
     <div class="card-h" onclick="toggle(${p.id})">
-      <span class="card-name">${p.name}</span>
+      <span class="card-name">${esc(p.name)}</span>
       <div class="card-tags">${tagH(p.tags)}</div>
       <i class="ti ti-chevron-down chevron ${isO?'o':''}" aria-hidden="true"></i>
     </div>
@@ -675,6 +809,7 @@ function cardH(p){
       ${dboxes?`<div class="dgrid">${dboxes}</div>`:''}
       ${iceH}${rflH}
       <div class="card-acts">
+        ${aiBtn}
         <button class="btn pr" onclick="openModal(${p.id})"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
         <button class="btn dn" onclick="del(${p.id})"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>
       </div>
@@ -685,9 +820,11 @@ function cardH(p){
 /* ── Metrics ── */
 function calcMetrics(){
   const rams=projs.reduce((a,p)=>a+(parseInt(p.rams)||0),0);
+  const ev=evidenceSummary().items;
   return{
     tot:projs.length,
     rams,
+    evidence:ev.length,
     iC:covCount('ieng'),iT:totalAttrs('ieng'),
     cC:covCount('ceng'),cT:totalAttrs('ceng')
   };
@@ -696,6 +833,7 @@ function calcMetrics(){
 /* ── Dashboard customise ── */
 const WIDGET_DEFS=[
   {id:'projects',l:'Total projects',c:''},
+  {id:'evidence',l:'Evidence items',c:'t'},
   {id:'rams',l:'Total RAMS',c:'a'},
   {id:'ieng',l:'IEng attrs',c:'g'},
   {id:'ceng',l:'CEng attrs',c:'c'},
@@ -723,7 +861,7 @@ function openDashCustomise(){
       ${tagList.length?`<div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-top:.5rem;margin-bottom:.25rem">Pin tags as metric cards</div>
       ${tagList.map(t=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
         <input type="checkbox" id="wcb-tag:${t.replace(/'/g,'\'')}" ${dashWidgets.includes('tag:'+t)?'checked':''} style="width:15px;height:15px;cursor:pointer">
-        ${t} <span style="font-size:11px;color:var(--t3)">(project count)</span>
+        ${esc(t)} <span style="font-size:11px;color:var(--t3)">(project count)</span>
       </label>`).join('')}`:''}
     </div>
     <div style="padding:.75rem 1.1rem;border-top:.5px solid var(--b);display:flex;justify-content:flex-end;gap:7px;position:sticky;bottom:0;background:var(--surface)">
@@ -757,6 +895,7 @@ function renderDash(){
   const tc=tagCounts();
   const metricDefs={
     projects:{l:'Projects',v:m.tot,c:''},
+    evidence:{l:'Evidence',v:m.evidence,c:'t'},
     rams:{l:'RAMS',v:m.rams,c:'a'},
     ieng:{l:'IEng attrs',v:`${m.iC}/${m.iT}`,c:'g'},
     ceng:{l:'CEng attrs',v:`${m.cC}/${m.cT}`,c:'c'},
@@ -767,7 +906,7 @@ function renderDash(){
       if(metricDefs[w]){const d=metricDefs[w];return`<div class="mc"><div class="ml">${d.l}</div><div class="mv ${d.c}">${d.v}</div></div>`;}
       if(w.startsWith('tag:')){
         const t=w.slice(4);const n=tc[t]||0;const cl=tagColor(t);
-        return`<div class="mc"><div class="ml" style="color:${CT[cl]}">${t}</div><div class="mv" style="color:${CT[cl]}">${n} <span style="font-size:13px;opacity:.6">proj</span></div></div>`;
+        return`<div class="mc"><div class="ml" style="color:${CT[cl]}">${esc(t)}</div><div class="mv" style="color:${CT[cl]}">${n} <span style="font-size:13px;opacity:.6">proj</span></div></div>`;
       }
       return '';
     }).join('');
@@ -781,28 +920,43 @@ function renderDash(){
     if(entries.length){
       tagEl.innerHTML=`<div style="font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.5rem">Tags across all projects</div><div class="tag-summary">${entries.map(([t,n])=>{
         const c=tagColor(t);
-        return`<span class="tag-count" style="background:${CC[c]};color:${CT[c]}">${t}<span class="tc-num">${n}</span></span>`;
+        return`<span class="tag-count" style="background:${CC[c]};color:${CT[c]}">${esc(t)}<span class="tc-num">${n}</span></span>`;
       }).join('')}</div>`;
     } else {tagEl.innerHTML='';}
   } else {tagEl.innerHTML='';}
 
-  document.getElementById('sb-projs').innerHTML=projs.map(p=>`<button class="pnav" onclick="jumpTo(${p.id})"><span class="pdot"></span>${p.name}</button>`).join('');
+  renderDashboardInsights();
+  document.getElementById('sb-projs').innerHTML=projs.map(p=>`<button class="pnav" onclick="jumpTo(${p.id})"><span class="pdot"></span>${esc(p.name)}</button>`).join('');
   const recent=[...projs].slice(-3).reverse();
   document.getElementById('dash-list').innerHTML=recent.map(cardH).join('')+(projs.length>3?`<button onclick="go('projects',document.getElementById('n-projects'))" style="margin-top:8px;font-size:12.5px;color:var(--blue);background:none;border:none;cursor:pointer;padding:.3rem 0;display:block">Show all ${projs.length} projects →</button>`:'');
+}
+
+function renderDashboardInsights(){
+  const {byAttr}=evidenceSummary();
+  const rows=allAttrKeys().map(a=>({key:a.key,name:a.text,group:a.group,...(byAttr[a.key]||{total:0,Strong:0,Medium:0,Weak:0})}));
+  const strongest=rows.filter(r=>r.total).sort((a,b)=>(b.Strong-b.Weak)-(a.Strong-a.Weak)||b.total-a.total).slice(0,3);
+  const weakest=rows.filter(r=>r.total&&r.Weak).sort((a,b)=>b.Weak-a.Weak||a.Strong-b.Strong).slice(0,3);
+  const none=rows.filter(r=>!r.total).slice(0,6);
+  const mini=(title,items,empty)=>`<div class="dbox"><div class="dl">${title}</div>${items.length?items.map(r=>`<div class="dv" style="margin-bottom:4px">${esc(r.name)} <span class="pill">S${r.Strong||0} M${r.Medium||0} W${r.Weak||0}</span></div>`).join(''):`<div class="dv">${empty}</div>`}</div>`;
+  document.getElementById('dash-insights').innerHTML=`<div class="dgrid" style="margin-bottom:1.5rem">
+    ${mini('Strongest attributes',strongest,'No evidence yet')}
+    ${mini('Weakest attributes',weakest,'No weak evidence yet')}
+    <div class="dbox" style="grid-column:1/-1"><div class="dl">Attributes with no evidence</div><div class="dv">${none.length?none.map(r=>esc(r.name)).join(' · '):'All listed attributes have at least one evidence item.'}</div></div>
+  </div>`;
 }
 
 /* ── Render projects ── */
 function renderProjs(){
   const tags=['all',...allTags()];
-  document.getElementById('proj-chips').innerHTML=tags.map(t=>`<button class="chip ${filt===t?'on':''}" onclick="setFilt('${t.replace(/'/g,"\\'")}',this)">${t==='all'?'All':t}</button>`).join('');
+  document.getElementById('proj-chips').innerHTML=tags.map(t=>`<button class="chip ${filt===t?'on':''}" onclick="setFilt('${t.replace(/'/g,"\\'")}',this)">${t==='all'?'All':esc(t)}</button>`).join('');
   const fp=filt==='all'?projs:projs.filter(p=>(p.tags||[]).includes(filt));
   document.getElementById('proj-list').innerHTML=fp.map(cardH).join('')||'<p style="color:var(--t3);font-size:12.5px;padding:.75rem 0">No projects match this filter.</p>';
 }
 
-/* ── Render deliverables ── */
+/* Render deliverables */
 function renderSum(){
   const rows=projs.map(p=>{
-    return`<tr><td>${p.name}</td><td>${(p.tags||[]).map(t=>`<span class="tag" style="background:${CC[tagColor(t)]};color:${CT[tagColor(t)]}">${t}</span>`).join(' ')||'–'}</td><td><span class="pill ${p.rams?'on':''}">${p.rams||'–'}</span></td><td style="font-size:12px;color:var(--t2)">${p.other||'–'}</td></tr>`;
+    return`<tr><td>${esc(p.name)}</td><td>${(p.tags||[]).map(t=>`<span class="tag" style="background:${CC[tagColor(t)]};color:${CT[tagColor(t)]}">${esc(t)}</span>`).join(' ')||'-'}</td><td><span class="pill ${p.rams?'on':''}">${esc(p.rams||'-')}</span></td><td style="font-size:12px;color:var(--t2)">${esc(p.other||'-')}</td></tr>`;
   }).join('');
   document.getElementById('sum-tbl').innerHTML=`<thead><tr><th>Project</th><th>Tags</th><th>RAMS</th><th>Notes</th></tr></thead><tbody>${rows}</tbody>`;
 }
@@ -827,11 +981,11 @@ function renderAttrs(){
       const manEntries=entries.filter(e=>e.type==='manual');
       const chkClass=isCv?(manEntries.length&&!aiEntries.length?'achk man':'achk cv'):'achk';
       const textCls=isCv?(manEntries.length&&!aiEntries.length?'atext man':'atext cv'):'atext';
-      const evTags=entries.map(e=>`<span class="a-ev ${e.type==='ai'?'ai-ev':'man-ev'}" title="${e.snip}"><i class="ti ti-folder" aria-hidden="true"></i>${e.proj}${e.type==='manual'?' (manual)':''}</span>`).join('');
+      const evTags=entries.map(e=>`<span class="a-ev ${e.type==='ai'?'ai-ev':'man-ev'}" title="${esc(e.snip)}"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)}${e.type==='manual'?' (manual)':''}</span>`).join('');
       return`<div class="aitem">
         <div class="${chkClass}" onclick="pickProjToggle('${k}')">${isCv?'<i class="ti ti-check" aria-hidden="true"></i>':''}</div>
         <div style="flex:1">
-          <div class="${textCls}">${a}</div>
+          <div class="${textCls}">${esc(a)}</div>
           ${isCv?`<div class="a-evs">${evTags}</div>`:''}
           ${!isCv?`<div style="font-size:11px;color:var(--t3);margin-top:2px">Click checkbox to manually mark as covered</div>`:''}
         </div>
@@ -849,24 +1003,41 @@ function renderAttrs(){
   }).join('');
 }
 
-/* ── Render evidence ── */
+/* Render evidence */
 function renderEvid(){
   const mode=eMode;const ec=effectiveCov(mode);
   document.getElementById('ev-list').innerHTML=ICE[mode].flatMap(g=>g.a.map((a,i)=>{
     const k=`${mode}_${g.g}_${i}`;
     const entries=ec[k]||[];
     const isCv=entries.length>0;
-    const hasMan=entries.some(e=>e.type==='manual');
-    const hasAI=entries.some(e=>e.type==='ai');
-    const cls=isCv?(hasMan&&!hasAI?'man':'cv'):'nc';
-    const lbl=isCv?(hasMan&&!hasAI?'Manually confirmed':'AI evidenced'):'Not yet covered';
-    const eH=isCv?entries.map(e=>`<div class="ev-entry"><div class="ev-proj"><i class="ti ti-folder" aria-hidden="true"></i>${e.proj}${e.type==='manual'?' · manual':''}</div><div class="ev-snip">${e.snip}</div></div>`).join('')
-      :`<p class="ev-nil">No evidence yet — add reflections or manually confirm in the attribute tracker.</p>`;
+    const cls=isCv?'cv':'nc';
+    const eH=isCv?entries.map(e=>{
+      const item=e.item;
+      if(!item){return`<div class="ev-entry"><div class="ev-proj"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)} · manual</div><div class="ev-snip">${esc(e.snip)}</div></div>`;}
+      const badge=item.userApproved?'Approved':(item.userEdited?'Edited':'AI draft');
+      return`<div class="ev-entry">
+        <div class="ev-proj"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)} · ${esc(item.sourceField||'reflection')} · ${badge}</div>
+        <div class="ev-snip"><strong>Evidence:</strong> ${esc(item.evidence)}</div>
+        ${item.rationale?`<div class="ev-snip"><strong>Rationale:</strong> ${esc(item.rationale)}</div>`:''}
+        <div class="ev-snip"><strong>Strength:</strong> ${esc(item.strength||'Medium')} · <strong>Confidence:</strong> ${esc(item.confidence||0)}%</div>
+        ${item.weakness?`<div class="ev-snip"><strong>Weakness:</strong> ${esc(item.weakness)}</div>`:''}
+        ${item.suggestedImprovement?`<div class="ev-snip"><strong>Suggested improvement:</strong> ${esc(item.suggestedImprovement)}</div>`:''}
+        <div class="card-acts" style="margin-top:.5rem;flex-wrap:wrap">
+          <button class="btn pr" onclick="approveEvidence('${item.id}')"><i class="ti ti-check" aria-hidden="true"></i> Approve</button>
+          <button class="btn" onclick="editEvidence('${item.id}')"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+          <button class="btn dn" onclick="rejectEvidence('${item.id}')"><i class="ti ti-x" aria-hidden="true"></i> Reject</button>
+          <button class="btn" onclick="removeEvidenceTag('${item.id}')"><i class="ti ti-tag-off" aria-hidden="true"></i> Remove tag</button>
+          <select onchange="changeEvidenceStrength('${item.id}',this.value)" style="font-size:11.5px;padding:4px 8px;border:.5px solid var(--bm);border-radius:7px;background:var(--surface);color:var(--t1)">
+            ${['Strong','Medium','Weak'].map(s=>`<option value="${s}" ${item.strength===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    }).join(''):`<p class="ev-nil">No evidence yet - add project detail or manually confirm in the attribute tracker.</p>`;
     return`<div class="ev-card">
       <div class="ev-h">
         <div class="ev-num ${cls}">${g.g}</div>
-        <div class="ev-info"><div class="ev-grp">Group ${g.g} — ${g.n}</div><div class="ev-attr">${a}</div></div>
-        <span class="ev-badge ${cls}">${lbl}</span>
+        <div class="ev-info"><div class="ev-grp">Group ${g.g} - ${esc(g.n)}</div><div class="ev-attr">${esc(a)}</div></div>
+        <span class="ev-badge ${cls}">${isCv?`${entries.length} item${entries.length===1?'':'s'}`:'Not yet covered'}</span>
       </div>
       <div class="ev-entries">${eH}</div>
     </div>`;
@@ -877,7 +1048,7 @@ function renderEvid(){
 function toggleManual(projId,key){
   const p=projs.find(x=>x.id===projId);if(!p) return;
   if(!p.manMap) p.manMap={};
-  const hasAI=!!(p.aiMap&&p.aiMap[key]);
+  const hasAI=evidenceForProject(p).some(e=>e.attributeKey===key);
   const cur=p.manMap[key];
   if(cur===undefined){if(hasAI){p.manMap[key]=false;}else{p.manMap[key]=true;}}
   else if(cur===true){p.manMap[key]=false;}
@@ -899,14 +1070,14 @@ function showPickerModal(key){
   Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
   overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:440px;overflow:hidden">
     <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:11px;color:var(--t3);margin-bottom:2px">Toggle attribute coverage</div><div style="font-size:13px;font-weight:500">${attrName}</div></div>
+      <div><div style="font-size:11px;color:var(--t3);margin-bottom:2px">Toggle attribute coverage</div><div style="font-size:13px;font-weight:500">${esc(attrName)}</div></div>
       <button onclick="document.getElementById('pick-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
     <div style="padding:.75rem .9rem">
       <div style="font-size:11.5px;color:var(--t2);margin-bottom:.6rem">Select a project to toggle:</div>
       <div style="display:flex;flex-direction:column;gap:4px">
         ${projs.map(p=>{
-          const ai=!!(p.aiMap&&p.aiMap[key]);
+          const ai=evidenceForProject(p).some(e=>e.attributeKey===key);
           const mm=(p.manMap||{})[key];
           let state='',stateC='';
           if(mm===true){state='Manually on';stateC='color:var(--blue)';}
@@ -914,7 +1085,7 @@ function showPickerModal(key){
           else if(ai){state='AI covered';stateC='color:var(--teal)';}
           else{state='Not covered';stateC='color:var(--t3)';}
           return`<button onclick="toggleManual(${p.id},'${key}');document.getElementById('pick-overlay').remove();renderAttrs();renderEvid();" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:.5rem .7rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);cursor:pointer;font-size:12.5px;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background='var(--surface2)'">
-            <span>${p.name}</span><span style="font-size:11px;${stateC}">${state}</span>
+            <span>${esc(p.name)}</span><span style="font-size:11px;${stateC}">${state}</span>
           </button>`;
         }).join('')}
       </div>
@@ -940,7 +1111,7 @@ function openModal(id){
   document.getElementById('eid').value=id||'';
   const p=id?projs.find(x=>x.id===id):null;
   document.getElementById('f-name').value=p?(p.name||''):'';
-  ['other','tech','per','chal'].forEach(f=>{document.getElementById('f-'+f).value=p?(p[f]||''):'';}); 
+  PROJECT_FIELDS.concat(['other']).forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=p?(p[f]||''):'';});
   document.getElementById('f-rams').value=p?(p.rams||''):'';
   modalTags=p?[...(p.tags||[])]:[];
   renderModalTags();
@@ -953,28 +1124,65 @@ function closeModal(){document.getElementById('modal').classList.remove('o');}
 async function saveProject(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){alert('Please enter a project name.');return;}
-  // finalize any pending tag text
   const pendingTag=document.getElementById('tag-text-input').value.trim();
   if(pendingTag&&!modalTags.includes(pendingTag))modalTags.push(pendingTag);
   document.getElementById('tag-text-input').value='';
   const id=document.getElementById('eid').value;
   const data={name,tags:[...modalTags],rams:parseInt(document.getElementById('f-rams').value)||0};
-  ['other','tech','per','chal'].forEach(f=>{data[f]=document.getElementById('f-'+f).value.trim();});
+  PROJECT_FIELDS.concat(['other']).forEach(f=>{const el=document.getElementById('f-'+f);data[f]=el?el.value.trim():'';});
   closeModal();
-  const reflChanged=!id||['tech','per','chal','other'].some(f=>{const p=projs.find(x=>x.id===+id);return p&&p[f]!==data[f];});
   if(id){const i=projs.findIndex(p=>p.id===+id);if(i>-1)projs[i]={...projs[i],...data};}
-  else{data.id=nid++;data.aiMap={};data.manMap={};projs.push(data);}
-  sv();rerender();
-  const proj=projs.find(p=>p.id===(id?+id:nid-1));
-  if(proj&&reflChanged){
-    toast('Saved — mapping ICE attributes…');
-    const map=await aiMap(proj);
-    proj.aiMap=map;sv();rerender();
-    toast(`✓ Mapped ${Object.keys(map).length} attributes`);
-  } else {toast(id?'Project updated':'Project added');}
+  else{data.id=nid++;data.aiMap={};data.manMap={};data.evidenceItems=[];projs.push(data);}
+  projs.forEach(migrateProject);
+  await sv();rerender();
+  toast(id?'Project updated':'Project added');
 }
 
 function del(id){if(!confirm('Delete this project?'))return;projs=projs.filter(p=>p.id!==id);if(expId===id)expId=null;sv();toast('Deleted');rerender();}
+
+async function analyseProject(id){
+  const p=projs.find(x=>x.id===id);if(!p)return;
+  if(!projectTextForAi(p).length){toast('Add project text before AI analysis');return;}
+  if(evidenceForProject(p,true).length&&!confirm('Re-analyse with AI? Existing AI evidence for this project will be replaced. Approved manual edits are kept only if they were user edited.'))return;
+  toast('Analysing with AI...');
+  const items=await aiMap(p);
+  const keep=(p.evidenceItems||[]).filter(e=>(e.userEdited||e.userApproved)&&!e.userRejected);
+  p.evidenceItems=keep.concat(items);
+  p.aiMap={};
+  items.forEach(e=>{p.aiMap[e.attributeKey]=e.evidence;});
+  p.aiAnalysedAt=nowIso();
+  await sv();rerender();
+  toast(`AI added ${items.length} evidence item${items.length===1?'':'s'}`);
+}
+
+function findEvidence(id){
+  for(const p of projs){const e=(p.evidenceItems||[]).find(x=>x.id===id);if(e)return{project:p,item:e};}
+  return{};
+}
+function approveEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  item.userApproved=true;item.userRejected=false;item.updatedAt=nowIso();sv();rerender();toast('Evidence approved');
+}
+function rejectEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  item.userRejected=true;item.userApproved=false;item.updatedAt=nowIso();sv();rerender();toast('Evidence rejected');
+}
+function changeEvidenceStrength(id,strength){
+  const {item}=findEvidence(id);if(!item)return;
+  item.strength=strength;item.userEdited=true;item.updatedAt=nowIso();sv();rerender();
+}
+function editEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  const evidence=prompt('Edit evidence text:',item.evidence);if(evidence===null)return;
+  const rationale=prompt('Edit rationale:',item.rationale||'');if(rationale===null)return;
+  const improvement=prompt('Edit suggested improvement:',item.suggestedImprovement||'');if(improvement===null)return;
+  item.evidence=evidence.trim();item.rationale=rationale.trim();item.suggestedImprovement=improvement.trim();
+  item.userEdited=true;item.updatedAt=nowIso();sv();rerender();toast('Evidence updated');
+}
+function removeEvidenceTag(id){
+  if(!confirm('Remove this evidence item from the attribute?'))return;
+  rejectEvidence(id);
+}
 
 /* ── Share / Export / Import ── */
 function openShareModal(){
@@ -1019,7 +1227,7 @@ function handleIncomingProfile(data){
   if(!confirm(`Replace your ${projs.length} project(s) with ${data.projs.length} from this profile?`)) return;
   projs=JSON.parse(JSON.stringify(data.projs));
   nid=Math.max(100,...projs.map(p=>p.id||0))+1;
-  projs.forEach(p=>{if(!p.manMap)p.manMap={};if(!p.aiMap)p.aiMap={};if(!p.tags)p.tags=[];if(p.rams===undefined)p.rams=0;});
+  projs.forEach(migrateProject);
   sv();rerender();toast('Profile imported');
 }
 function checkIncomingShareLink(){
