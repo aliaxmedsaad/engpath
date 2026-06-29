@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EngPath</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f1;--surface:#fff;--surface2:#f5f4f1;
+  --b:rgba(0,0,0,.08);--bm:rgba(0,0,0,.12);
+  --t1:#18171a;--t2:#6b6963;--t3:#a09990;
+  --blue:#185fa5;--blue-bg:#e6f1fb;--blue-t:#0c447c;
+  --teal:#0f6e56;--teal-bg:#e1f5ee;--teal-t:#085041;
+  --amber:#854f0b;--amber-bg:#faeeda;
+  --purple:#534ab7;--purple-bg:#eeedfe;
+  --coral:#993c1d;--coral-bg:#faece7;
+  --green:#3b6d11;--green-bg:#eaf3de;
+  --gray-bg:#f1efe8;--gray-t:#5f5e5a;
+  --r:10px;--r-sm:7px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#18171a;--surface:#222128;--surface2:#2c2b33;
+    --b:rgba(255,255,255,.07);--bm:rgba(255,255,255,.12);
+    --t1:#f0eee9;--t2:#a09990;--t3:#6b6963;
+    --blue:#378add;--blue-bg:#0c2342;--blue-t:#b5d4f4;
+    --teal:#1d9e75;--teal-bg:#04342c;--teal-t:#9fe1cb;
+    --amber:#ef9f27;--amber-bg:#412402;
+    --purple:#7f77dd;--purple-bg:#26215c;
+    --coral:#d85a30;--coral-bg:#4a1b0c;
+    --green:#639922;--green-bg:#173404;
+    --gray-bg:#2c2c2a;--gray-t:#888780;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.6;min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--surface);border-right:.5px solid var(--bm);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:1.1rem 1rem .8rem;display:flex;align-items:center;gap:9px;border-bottom:.5px solid var(--b)}
+.logo-mark{width:30px;height:30px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center}
+.logo-mark i{color:#fff;font-size:16px}
+.logo-name{font-size:13.5px;font-weight:500}
+.logo-sub{font-size:11px;color:var(--t3)}
+.sb-section{padding:.75rem .65rem .2rem}
+.sb-label{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;padding:0 .45rem;margin-bottom:3px}
+.nav{display:flex;align-items:center;gap:7px;width:100%;padding:.35rem .45rem;border-radius:var(--r-sm);border:none;background:none;color:var(--t2);font-size:12.5px;cursor:pointer;text-align:left;transition:background .1s,color .1s}
+.nav i{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.nav:hover{background:var(--surface2)}
+.nav.on{background:var(--blue-bg);color:var(--blue);font-weight:500}
+.sb-projs{padding:.4rem .65rem;flex:1;overflow-y:auto}
+.pnav{display:flex;align-items:center;gap:7px;width:100%;padding:.28rem .45rem;border-radius:6px;border:none;background:none;color:var(--t3);font-size:11.5px;cursor:pointer;text-align:left;transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnav:hover{background:var(--surface2);color:var(--t2)}
+.pdot{width:4px;height:4px;border-radius:50%;background:var(--bm);flex-shrink:0}
+.sb-foot{padding:.85rem .65rem;border-top:.5px solid var(--b)}
+.add{width:100%;padding:.5rem;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
+.add:hover{opacity:.88}
+.main{flex:1;min-width:0;padding:1.75rem 2.25rem 2rem}
+.view{display:none}.view.on{display:block}
+.ph{margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.ph-left{}
+.pt{font-size:18px;font-weight:500;letter-spacing:-.02em}
+.ps{font-size:12.5px;color:var(--t2);margin-top:2px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:1.75rem}
+.mc{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);padding:.8rem .95rem;position:relative}
+.ml{font-size:11px;color:var(--t3);margin-bottom:4px}
+.mv{font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1}
+.mv.b{color:var(--blue)}.mv.t{color:var(--teal)}.mv.a{color:var(--amber)}.mv.p{color:var(--purple)}.mv.g{color:var(--green)}.mv.c{color:var(--coral)}
+/* Dashboard customise */
+.dash-cust-btn{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .1s;white-space:nowrap}
+.dash-cust-btn:hover{background:var(--surface2)}
+.dash-cust-btn i{font-size:13px}
+/* Tag chips on cards */
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
+/* Chips */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.9rem}
+.chip{font-size:11.5px;padding:3px 11px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;transition:all .1s}
+.chip:hover{background:var(--surface2)}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* Project cards */
+.plist{display:flex;flex-direction:column;gap:5px}
+.pcard{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden;transition:border-color .15s}
+.pcard:hover{border-color:rgba(0,0,0,.2)}
+@media(prefers-color-scheme:dark){.pcard:hover{border-color:rgba(255,255,255,.2)}}
+.card-h{display:flex;align-items:center;gap:9px;padding:.8rem 1rem;cursor:pointer}
+.card-name{font-size:13.5px;font-weight:500;flex:1}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.chevron{color:var(--t3);font-size:17px;flex-shrink:0;transition:transform .18s}
+.chevron.o{transform:rotate(180deg)}
+.card-b{display:none;padding:0 1rem 1rem;border-top:.5px solid var(--b)}
+.card-b.o{display:block}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.9rem}
+.dbox{background:var(--surface2);border-radius:var(--r-sm);padding:.6rem .8rem}
+.dl{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dv{font-size:12.5px;color:var(--t1);line-height:1.5}
+.dv.mono{font-family:monospace;font-size:11.5px;color:var(--t2)}
+.btn{font-size:11.5px;padding:4px 11px;border-radius:var(--r-sm);border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .1s}
+.btn i{font-size:13px}
+.btn:hover{background:var(--surface2)}
+.btn.pr{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.pr:hover{opacity:.88}
+.btn.dn{color:var(--coral);border-color:rgba(153,60,29,.3)}
+.btn.dn:hover{background:var(--coral-bg)}
+.card-acts{display:flex;gap:7px;margin-top:.9rem}
+.rfl-sec{margin-top:.9rem;display:flex;flex-direction:column;gap:.6rem}
+.rfl-h{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.rfl-h i{font-size:13px}
+.rfl-t{font-size:12.5px;line-height:1.7;color:var(--t1);background:var(--surface2);border-radius:var(--r-sm);padding:.6rem .8rem;white-space:pre-wrap}
+.rfl-nil{font-size:12.5px;color:var(--t3);font-style:italic;margin-top:.75rem}
+.ice-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:.6rem}
+.ice-m{font-size:10px;padding:1px 6px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t);font-weight:500}
+.mode-tabs{display:flex;gap:6px;margin-bottom:1.25rem}
+.mtab{font-size:12.5px;padding:5px 14px;border-radius:20px;border:.5px solid var(--bm);background:var(--surface);color:var(--t2);cursor:pointer;font-weight:500;transition:all .1s}
+.mtab:hover{background:var(--surface2)}
+.mtab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.prog-wrap{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);padding:1.1rem 1.25rem;margin-bottom:1.25rem}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.6rem}
+.prog-label{font-size:12.5px;font-weight:500}
+.prog-num{font-size:20px;font-weight:500;color:var(--blue);letter-spacing:-.03em}
+.prog-track{height:6px;background:var(--b);border-radius:20px;overflow:hidden}
+.prog-fill{height:100%;background:var(--blue);border-radius:20px;transition:width .3s ease}
+.prog-sub{font-size:11.5px;color:var(--t3);margin-top:.4rem}
+.agroup{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
+.ag-h{padding:.8rem 1rem;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+.ag-num{width:24px;height:24px;border-radius:50%;background:var(--blue-bg);color:var(--blue-t);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ag-name{font-size:13px;font-weight:500;flex:1}
+.ag-prog{font-size:11.5px;color:var(--t3)}
+.ag-chev{color:var(--t3);font-size:17px;transition:transform .18s}
+.ag-chev.o{transform:rotate(180deg)}
+.ag-body{display:none;border-top:.5px solid var(--b);padding:.5rem .9rem .75rem}
+.ag-body.o{display:block}
+.aitem{display:flex;align-items:flex-start;gap:9px;padding:.5rem .3rem;border-radius:7px;transition:background .1s}
+.aitem:hover{background:var(--surface2)}
+.achk{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--bm);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .12s;cursor:pointer}
+.achk.cv{background:var(--teal);border-color:var(--teal)}
+.achk.cv i{color:#fff;font-size:11px}
+.achk.man{background:var(--blue);border-color:var(--blue)}
+.achk.man i{color:#fff;font-size:11px}
+.atext{font-size:12.5px;color:var(--t2);line-height:1.5;flex:1}
+.atext.cv,.atext.man{color:var(--t1)}
+.a-evs{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px}
+.a-ev{font-size:10.5px;padding:1px 7px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+.a-ev.ai-ev{background:var(--teal-bg);color:var(--teal-t)}
+.a-ev.ai-ev:hover{opacity:.8}
+.a-ev.man-ev{background:var(--blue-bg);color:var(--blue-t)}
+.a-ev.man-ev:hover{opacity:.8}
+.override-hint{background:var(--blue-bg);border:.5px solid rgba(24,95,165,.2);border-radius:var(--r-sm);padding:.55rem .8rem;font-size:12px;color:var(--blue-t);display:flex;align-items:center;gap:6px;margin-bottom:1rem}
+.override-hint i{font-size:14px;flex-shrink:0}
+.ev-list{display:flex;flex-direction:column;gap:6px}
+.ev-card{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden}
+.ev-h{padding:.8rem 1rem;display:flex;align-items:flex-start;gap:9px}
+.ev-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.ev-num.cv{background:var(--teal-bg);color:var(--teal-t)}
+.ev-num.man{background:var(--blue-bg);color:var(--blue-t)}
+.ev-num.nc{background:var(--surface2);color:var(--t3)}
+.ev-info{flex:1}
+.ev-grp{font-size:11px;color:var(--t3);margin-bottom:1px}
+.ev-attr{font-size:13px;font-weight:500;color:var(--t1);line-height:1.4}
+.ev-badge{font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:500;flex-shrink:0;margin-top:3px}
+.ev-badge.cv{background:var(--teal-bg);color:var(--teal-t)}
+.ev-badge.man{background:var(--blue-bg);color:var(--blue-t)}
+.ev-badge.nc{background:var(--gray-bg);color:var(--gray-t)}
+.ev-entries{padding:0 1rem .8rem;border-top:.5px solid var(--b)}
+.ev-entry{margin-top:.5rem;background:var(--surface2);border-radius:var(--r-sm);padding:.5rem .75rem}
+.ev-proj{font-size:10.5px;font-weight:500;color:var(--blue);margin-bottom:2px;display:flex;align-items:center;gap:3px}
+.ev-proj i{font-size:12px}
+.ev-snip{font-size:12px;color:var(--t2);line-height:1.6;white-space:pre-wrap}
+.ev-nil{font-size:12px;color:var(--t3);font-style:italic;padding:.5rem 0 0}
+.twrap{background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r);overflow:hidden;margin-top:.9rem}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:.55rem .85rem;font-size:10.5px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:.5px solid var(--bm)}
+td{padding:.6rem .85rem;border-bottom:.5px solid var(--b);vertical-align:middle;color:var(--t2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+td:first-child{color:var(--t1);font-weight:500}
+.pill{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:500;background:var(--surface2);color:var(--t3)}
+.pill.on{background:var(--blue-bg);color:var(--blue-t)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:flex-start;justify-content:center;padding:2.5rem 1rem 1rem;overflow-y:auto}
+.overlay.o{display:flex}
+.modal{background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:560px;flex-shrink:0}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:.5px solid var(--b)}
+.mh h3{font-size:14px;font-weight:500}
+.mclose{background:none;border:none;font-size:20px;cursor:pointer;color:var(--t3);line-height:1}
+.mclose:hover{color:var(--t1)}
+.mb{padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.85rem}
+.field label{display:block;font-size:10.5px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.field input,.field textarea{width:100%;padding:.45rem .65rem;border:.5px solid var(--bm);border-radius:var(--r-sm);font-size:13px;font-family:inherit;color:var(--t1);background:var(--surface);transition:border-color .15s;resize:vertical}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
+.field textarea{min-height:70px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* Custom tag input */
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:.4rem .55rem;border:.5px solid var(--bm);border-radius:var(--r-sm);background:var(--surface);min-height:38px;align-items:center;cursor:text}
+.tag-input-wrap:focus-within{border-color:var(--blue)}
+.tag-pill{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
+.tag-pill button{background:none;border:none;cursor:pointer;color:var(--blue-t);font-size:13px;line-height:1;padding:0;display:flex;align-items:center}
+.tag-input-wrap input{border:none;outline:none;font-size:12.5px;color:var(--t1);background:transparent;min-width:80px;flex:1;font-family:inherit}
+.mf{display:flex;justify-content:flex-end;gap:7px;padding:.85rem 1.25rem;border-top:.5px solid var(--b)}
+.ai-note{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3)}
+.ai-note i{font-size:13px;color:var(--blue)}
+.toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(6px);background:var(--t1);color:var(--surface);padding:.5rem 1rem;border-radius:20px;font-size:12.5px;opacity:0;pointer-events:none;transition:all .18s;z-index:200;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Auth screen */
+.auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:1rem}
+.auth-box{background:var(--surface);border:.5px solid var(--bm);border-radius:12px;width:100%;max-width:380px;overflow:hidden}
+.auth-head{padding:1.5rem 1.5rem 1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;gap:10px}
+.auth-logo{width:32px;height:32px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.auth-logo i{color:#fff;font-size:17px}
+.auth-title{font-size:15px;font-weight:500}
+.auth-sub{font-size:12px;color:var(--t3)}
+.auth-body{padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.85rem}
+.auth-field label{display:block;font-size:10.5px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.auth-field input{width:100%;padding:.5rem .7rem;border:.5px solid var(--bm);border-radius:var(--r-sm);font-size:13px;font-family:inherit;color:var(--t1);background:var(--surface);transition:border-color .15s}
+.auth-field input:focus{outline:none;border-color:var(--blue)}
+.auth-btn{width:100%;padding:.6rem;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}
+.auth-err{font-size:12px;color:var(--coral);background:var(--coral-bg);padding:.45rem .7rem;border-radius:var(--r-sm);display:none}
+.auth-err.on{display:block}
+.auth-switch{font-size:12px;color:var(--t3);text-align:center}
+.auth-switch button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;font-family:inherit}
+.auth-foot{padding:.75rem 1.5rem;border-top:.5px solid var(--b)}
+.sh{font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.65rem}
+/* Dashboard tag summary */
+.tag-summary{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:1.5rem}
+.tag-count{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue-t)}
+.tag-count .tc-num{font-size:11px;background:var(--blue);color:#fff;border-radius:20px;padding:0 5px;min-width:18px;text-align:center}
+@media(max-width:640px){.sidebar{display:none}.main{padding:1rem}.dgrid,.frow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>
+      <div><div class="logo-name">EngPath</div><div class="logo-sub" id="sb-sub">Loading…</div></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Overview</div>
+      <button class="nav on" id="n-dash" onclick="go('dash',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
+      <button class="nav" id="n-projects" onclick="go('projects',this)"><i class="ti ti-folder" aria-hidden="true"></i> All projects</button>
+      <button class="nav" id="n-summary" onclick="go('summary',this)"><i class="ti ti-table" aria-hidden="true"></i> Deliverables</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">ICE attributes</div>
+      <button class="nav" id="n-attrs" onclick="go('attrs',this)"><i class="ti ti-award" aria-hidden="true"></i> Attribute tracker</button>
+      <button class="nav" id="n-evid" onclick="go('evid',this)"><i class="ti ti-list-check" aria-hidden="true"></i> Evidence log</button>
+    </div>
+    <div class="sb-label" style="padding:.6rem 1.1rem .2rem;font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Projects</div>
+    <div class="sb-projs" id="sb-projs"></div>
+    <div class="sb-foot">
+      <button class="add" onclick="openModal()"><i class="ti ti-plus" aria-hidden="true"></i> Add project</button>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn" style="flex:1;justify-content:center" onclick="openShareModal()"><i class="ti ti-share-2" aria-hidden="true"></i> Share</button>
+        <button class="btn" style="flex:1;justify-content:center" onclick="document.getElementById('import-file').click()"><i class="ti ti-download" aria-hidden="true"></i> Import</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importFile(event)">
+      <button class="btn" style="width:100%;justify-content:center;margin-top:6px;color:var(--coral);border-color:rgba(153,60,29,.3)" onclick="signOut()"><i class="ti ti-logout" aria-hidden="true"></i> Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <div class="view on" id="view-dash">
+      <div class="ph">
+        <div class="ph-left"><div class="pt">Dashboard</div><div class="ps" id="dash-sub"></div></div>
+        <button class="dash-cust-btn" onclick="openDashCustomise()"><i class="ti ti-layout-grid"></i> Customise</button>
+      </div>
+      <div class="metrics" id="dash-metrics"></div>
+      <div id="dash-tag-summary"></div>
+      <div id="dash-insights"></div>
+      <div class="sh">Recent projects</div>
+      <div class="plist" id="dash-list"></div>
+    </div>
+
+    <!-- Projects -->
+    <div class="view" id="view-projects">
+      <div class="ph"><div class="ph-left"><div class="pt">All projects</div><div class="ps">Tap any project to expand and write your reflections.</div></div></div>
+      <div class="chips" id="proj-chips"></div>
+      <div class="plist" id="proj-list"></div>
+    </div>
+
+    <!-- Deliverables -->
+    <div class="view" id="view-summary">
+      <div class="ph"><div class="ph-left"><div class="pt">Deliverables</div><div class="ps">Overview of work across every project.</div></div></div>
+      <div class="twrap"><table id="sum-tbl"></table></div>
+    </div>
+
+    <!-- Attribute tracker -->
+    <div class="view" id="view-attrs">
+      <div class="ph"><div class="ph-left"><div class="pt">Attribute tracker</div><div class="ps">AI-mapped from your reflections. Override any attribute manually by clicking the checkbox.</div></div></div>
+      <div class="mode-tabs">
+        <button class="mtab on" onclick="setAMode('ieng',this)">IEng (MICE)</button>
+        <button class="mtab" onclick="setAMode('ceng',this)">CEng (MICE)</button>
+      </div>
+      <div class="override-hint"><i class="ti ti-hand-click" aria-hidden="true"></i> Click any checkbox to manually override — ticked manually (blue), ticked by AI (green), unticked resets to AI state.</div>
+      <div id="attr-prog"></div>
+      <div id="attr-groups"></div>
+    </div>
+
+    <!-- Evidence log -->
+    <div class="view" id="view-evid">
+      <div class="ph"><div class="ph-left"><div class="pt">Evidence log</div><div class="ps">What you've evidenced per ICE attribute, from project reflections and manual overrides.</div></div></div>
+      <div class="mode-tabs">
+        <button class="mtab on" onclick="setEMode('ieng',this)">IEng (MICE)</button>
+        <button class="mtab" onclick="setEMode('ceng',this)">CEng (MICE)</button>
+      </div>
+      <div class="ev-list" id="ev-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Auth Screen -->
+<div class="auth-screen" id="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-head">
+      <div class="auth-logo"><i class="ti ti-clipboard-list" aria-hidden="true"></i></div>
+      <div><div class="auth-title">EngPath</div><div class="auth-sub">Engineering portfolio tracker</div></div>
+    </div>
+    <div class="auth-body">
+      <div id="auth-err" class="auth-err"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()"></div>
+      <button class="auth-btn" id="auth-btn" onclick="authSubmit()">Sign in</button>
+    </div>
+    <div class="auth-foot">
+      <div class="auth-switch" id="auth-switch">Don't have an account? <button onclick="toggleAuthMode()">Sign up</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mh"><h3 id="modal-title">Add project</h3><button class="mclose" onclick="closeModal()">×</button></div>
+    <div class="mb">
+      <input type="hidden" id="eid">
+      <div class="field"><label>Project name</label><input type="text" id="f-name" placeholder="e.g. Slough"></div>
+      <div class="frow">
+        <div class="field"><label>Date / date range</label><input type="text" id="f-dateRange" placeholder="e.g. Jan 2026 - Mar 2026"></div>
+        <div class="field"><label>Employer or client</label><input type="text" id="f-client" placeholder="e.g. Thames Water"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>User role</label><input type="text" id="f-role" placeholder="e.g. Graduate engineer"></div>
+        <div class="field"><label>Project type</label><input type="text" id="f-projectType" placeholder="e.g. Rail, water, highways"></div>
+      </div>
+      <div class="field"><label>Location</label><input type="text" id="f-location" placeholder="e.g. Oxford"></div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tag-input-wrap" id="tag-input-wrap" onclick="document.getElementById('tag-text-input').focus()">
+          <input type="text" id="tag-text-input" placeholder="Type a tag and press Enter…" onkeydown="handleTagInput(event)" oninput="showTagSuggestions(this.value)">
+        </div>
+        <div id="tag-suggestions" style="display:none;margin-top:4px;background:var(--surface);border:.5px solid var(--bm);border-radius:var(--r-sm);overflow:hidden"></div>
+      </div>
+      <div class="field"><label>RAMS count</label><input type="number" id="f-rams" placeholder="e.g. 117" min="0"></div>
+      <div class="field"><label>Responsibilities</label><textarea id="f-responsibilities" placeholder="What were you personally responsible for?"></textarea></div>
+      <div class="field"><label>Main project description</label><textarea id="f-description" placeholder="What was the project and its purpose?"></textarea></div>
+      <div class="field"><label>Reflection</label><textarea id="f-reflection" placeholder="What did you do, decide, communicate, or learn?"></textarea></div>
+      <div class="field"><label>Lessons learned</label><textarea id="f-lessonsLearned" placeholder="What would you repeat or improve next time?"></textarea></div>
+      <div class="field"><label>Outcomes / impact</label><textarea id="f-outcomes" placeholder="What changed because of your work? Include numbers if possible."></textarea></div>
+      <div class="field"><label>Documents / photos</label><textarea id="f-documents" placeholder="Links or notes about evidence files, if any."></textarea></div>
+      <div class="field"><label>Legacy notes / activities</label><textarea id="f-other" placeholder="Existing notes are kept here."></textarea></div>
+      <div class="ai-note"><i class="ti ti-sparkles" aria-hidden="true"></i> Save first, then use Analyse with AI on the project card when you want to spend an API call.</div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn pr" onclick="saveProject()"><i class="ti ti-check" aria-hidden="true"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── ICE Attributes ── */
+const ICE={
+  ieng:[
+    {g:1,n:"Understanding and practical application of engineering",a:["Maintain and extend knowledge of engineering theory and practice","Solve engineering problems using a sound theoretical approach","Identify, review and select techniques, procedures and methods","Contribute to the design and development of engineering solutions","Exercise sound independent engineering judgement"]},
+    {g:2,n:"Management and leadership",a:["Plan the work and resources needed for effective implementation","Manage the planning and organisation of tasks and resources","Manage teams or technical specialisms","Assist others to meet changing technical and managerial needs","Manage quality processes and contribute to quality improvements"]},
+    {g:3,n:"Commercial ability",a:["Manage, prepare and control costs/budgets","Use sound knowledge of statutory and commercial frameworks"]},
+    {g:4,n:"Health, safety and welfare",a:["Demonstrate sound knowledge of legislation, hazards and safe systems","Manage risks","Manage health, safety and welfare within area of responsibility","Contribute to improvements in health, safety and welfare"]},
+    {g:5,n:"Sustainable development",a:["Understand the principles of sustainable development and apply them","Manage engineering activities that contribute to sustainable development"]},
+    {g:6,n:"Interpersonal skills and communication",a:["Communicate well with others at all levels","Discuss ideas and plans competently and with confidence","Demonstrate effective personal and social skills","Demonstrate awareness of diversity and inclusion"]},
+    {g:7,n:"Professional commitment",a:["Understand and comply with the ICE Code of Conduct","Understand ethical issues and carry out responsibilities ethically","Plan, carry out and record CPD to maintain and enhance competence","Identify the limits of personal knowledge and skills","Engage with ICE activities"]}
+  ],
+  ceng:[
+    {g:1,n:"Understanding and practical application of engineering",a:["Maintain and extend knowledge of engineering theory and practice","Solve engineering problems using a sound theoretical approach","Engage in the creation or introduction of new techniques and technology","Identify, review and select techniques, procedures and methods","Identify and define requirements, challenges, risks, and opportunities","Contribute to the design and development of engineering solutions","Undertake design, development and implementation of engineering solutions","Exercise sound independent engineering judgement"]},
+    {g:2,n:"Management and leadership",a:["Plan the work and resources needed for effective implementation","Manage the planning and organisation of tasks and resources","Manage, programme and schedule tasks and resources","Manage teams or technical specialisms","Lead or influence teams / technical specialisms","Assist others to meet changing technical and managerial needs","Develop others to meet changing technical and managerial needs","Manage quality processes and contribute to quality improvements","Demonstrate continuous quality improvement and promote best practice"]},
+    {g:3,n:"Commercial ability",a:["Manage, prepare and control costs/budgets","Manage, prepare and control costs/budgets of a significant project","Use sound knowledge of statutory and commercial frameworks","Demonstrate sound judgement on statutory and contractual issues"]},
+    {g:4,n:"Health, safety and welfare",a:["Demonstrate sound knowledge of legislation, hazards and safe systems","Manage risks","Manage health, safety and welfare within area of responsibility","Contribute to improvements in health, safety and welfare","Demonstrate leadership by promoting improvements in health and safety"]},
+    {g:5,n:"Sustainable development",a:["Understand the principles of sustainable development and apply them","Manage engineering activities that contribute to sustainable development","Take a responsible role in improvements supporting sustainable development"]},
+    {g:6,n:"Interpersonal skills and communication",a:["Communicate well with others at all levels","Discuss ideas and plans competently and with confidence","Communicate new concepts to technical and non-technical stakeholders","Demonstrate effective personal and social skills","Demonstrate awareness of diversity and inclusion","Proactively manage diversity and inclusion"]},
+    {g:7,n:"Professional commitment",a:["Understand and comply with the ICE Code of Conduct","Understand ethical issues and carry out responsibilities ethically","Plan, carry out and record CPD to maintain and enhance competence","Identify the limits of personal knowledge and skills","Exercise sound holistic independent judgement","Engage with ICE activities"]}
+  ]
+};
+
+const KW={1:['engineer','design','solution','technical','calculat','theory','problem','method','technolog','implement','procedure','evaluat','PI','inspection','analysis','structural','hydraulic'],2:['manag','lead','plan','team','organis','resource','quality','schedule','supervise','coordinat','programme'],3:['cost','budget','commercial','contract','financial','NEC','statutory','spend'],4:['safety','RAMS','risk','hazard','health','welfare','CDM','method statement','HSE'],5:['sustainab','environment','carbon','climate','SDG','green','ecology','waste'],6:['communicat','present','report','stakeholder','client','meeting','discuss','written','oral','diversity'],7:['CPD','ethics','code of conduct','ICE','professional','reflec','training','competence']};
+
+/* ── Default data ── */
+const DEFS=[
+  {id:1,name:"Slough",tags:["PI work","Calculations"],rams:0,other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:2,name:"Bracknell",tags:["PI work"],rams:0,other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:3,name:"Wiltshire (WPP)",tags:["PI work"],rams:0,other:"",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:4,name:"Thames Water – Year 1",tags:["RAMS","GI"],rams:50,other:"Planning/Management, Water quality training, AOS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:5,name:"Thames Water – Year 2",tags:["RAMS"],rams:67,other:"Planning/Management, Additional training",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:6,name:"Pad Foundation for Scouts",tags:["Calculations"],rams:0,other:"Calculations",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:7,name:"CAFA",tags:["Other"],rams:0,other:"CAFA involvement",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:8,name:"Northwest & Central CP7",tags:["IfA","Led work"],rams:0,other:"Planning/Management, Managing & leading team",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:9,name:"CP7",tags:["Other"],rams:0,other:"Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:10,name:"Buckinghamshire (CAFA Y1)",tags:["Other"],rams:0,other:"Night TVP, Communication, Making drawings",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:11,name:"Oxford",tags:["Led work"],rams:0,other:"Contract work, Led SPONS",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:12,name:"Cardiff Central Station Link",tags:["Calculations"],rams:0,other:"Calculations, Validation",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:13,name:"Severn Tunnel Junction",tags:["Other"],rams:0,other:"Validation, Form A",tech:"",per:"",chal:"",aiMap:{},manMap:{}},
+  {id:14,name:"Health & Safety Committee",tags:["Other"],rams:0,other:"H&S interview, Committee participation",tech:"",per:"",chal:"",aiMap:{},manMap:{}}
+];
+
+/* ── Dashboard widget config ── */
+const DEFAULT_WIDGETS=['projects','evidence','rams','tags','ieng','ceng'];
+let dashWidgets=[];
+
+/* ── State ── */
+let projs=[], nid=100, filt='all', expId=null, aMode='ieng', eMode='ieng';
+// Current tags being edited in modal
+let modalTags=[];
+
+/* ── Supabase ── */
+const SUPA_URL='https://avmxfiwcgmhxrzdpvmnk.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bXhmaXdjZ21oeHJ6ZHB2bW5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODcyNDcsImV4cCI6MjA5ODA2MzI0N30.5vU8cqoFn9P6gFeDxsCEVQzumXbalZ6X7LZbvoYF6GA';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let currentUser=null;
+
+/* ── Auth UI ── */
+let authMode='signin';
+function toggleAuthMode(){
+  authMode=authMode==='signin'?'signup':'signin';
+  document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';
+  document.getElementById('auth-switch').innerHTML=authMode==='signin'?
+    'Don\'t have an account? <button onclick="toggleAuthMode()">Sign up</button>':
+    'Already have an account? <button onclick="toggleAuthMode()">Sign in</button>';
+  document.getElementById('auth-err').classList.remove('on');
+}
+async function authSubmit(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const errEl=document.getElementById('auth-err');
+  errEl.classList.remove('on');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.classList.add('on');return;}
+  document.getElementById('auth-btn').textContent='Please wait…';
+  try{
+    let result;
+    if(authMode==='signin'){
+      result=await sb.auth.signInWithPassword({email,password:pass});
+    } else {
+      result=await sb.auth.signUp({email,password:pass});
+    }
+    if(result.error){errEl.textContent=result.error.message;errEl.classList.add('on');document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';return;}
+    if(authMode==='signup'&&result.data?.user&&!result.data.session){
+      errEl.style.color='var(--teal)';errEl.style.background='var(--teal-bg)';
+      errEl.textContent='Check your email to confirm your account, then sign in.';
+      errEl.classList.add('on');
+      document.getElementById('auth-btn').textContent='Sign in';
+      authMode='signin';
+      return;
+    }
+    // Signed in — load app
+    currentUser=result.data.user;
+    showApp();
+  }catch(e){errEl.textContent='Something went wrong. Please try again.';errEl.classList.add('on');document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';}
+}
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.querySelector('.app').style.display='flex';
+  load();
+}
+function showAuth(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.querySelector('.app').style.display='none';
+}
+async function signOut(){
+  await sb.auth.signOut();
+  currentUser=null;
+  projs=[];
+  showAuth();
+  toast('Signed out');
+}
+
+async function load(){
+  try{
+    const w=localStorage.getItem('pt5_widgets');
+    dashWidgets=w?JSON.parse(w):[...DEFAULT_WIDGETS];
+    // Try to load from Supabase
+    const {data,error}=await sb.from('projects').select('data').eq('user_id',currentUser.id).maybeSingle();
+    if(data&&data.data){
+      const saved=data.data;
+      projs=saved.projs||[];
+      nid=saved.nid||100;
+      projs.forEach(migrateProject);
+    } else {
+      // First time — use defaults
+      projs=JSON.parse(JSON.stringify(DEFS)).map(migrateProject);
+      await sv();
+    }
+  }catch(e){
+    console.error('Load error:',e);
+    projs=JSON.parse(JSON.stringify(DEFS)).map(migrateProject);
+    dashWidgets=[...DEFAULT_WIDGETS];
+  }
+  renderDash();
+  checkIncomingShareLink();
+}
+
+async function sv(){
+  try{
+    localStorage.setItem('pt5_widgets',JSON.stringify(dashWidgets));
+    const payload={projs,nid};
+    await sb.from('projects').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  }catch(e){console.error('Save error:',e);}
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
+
+const PROJECT_FIELDS=['dateRange','client','role','projectType','location','responsibilities','description','reflection','lessonsLearned','outcomes','documents'];
+const AI_SOURCE_FIELDS=['responsibilities','description','reflection','lessonsLearned','outcomes'];
+function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function uid(prefix='ev'){return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;}
+function nowIso(){return new Date().toISOString();}
+function attrName(key){
+  const parts=String(key||'').split('_');const mode=parts[0],gNum=+parts[1],idx=+parts[2];
+  const g=ICE[mode]?.find(x=>x.g===gNum);
+  return g?.a?.[idx]||key;
+}
+function attrGroupName(key){
+  const parts=String(key||'').split('_');const mode=parts[0],gNum=+parts[1];
+  return ICE[mode]?.find(x=>x.g===gNum)?.n||'ICE attribute';
+}
+function allAttrKeys(){
+  const keys=[];
+  ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>g.a.forEach((a,i)=>keys.push({key:`${lvl}_${g.g}_${i}`,text:a,group:g.n}))));
+  return keys;
+}
+function migrateProject(p){
+  PROJECT_FIELDS.forEach(f=>{if(p[f]===undefined)p[f]='';});
+  if(!p.reflection){
+    p.reflection=[p.tech,p.per,p.chal].filter(Boolean).join('\n\n');
+  }
+  if(!p.description&&p.other)p.description=p.other;
+  if(!p.evidenceItems)p.evidenceItems=[];
+  if(!p.manMap)p.manMap={};
+  if(!p.aiMap)p.aiMap={};
+  if(!p.tags)p.tags=[];
+  if(p.rams===undefined)p.rams=0;
+  Object.entries(p.aiMap||{}).forEach(([key,snip])=>{
+    if((p.evidenceItems||[]).some(e=>e.attributeKey===key&&e.evidence===snip)) return;
+    p.evidenceItems.push({
+      id:uid('old'),projectId:p.id,attributeKey:key,attributeName:attrName(key),evidence:String(snip||''),
+      rationale:'Migrated from earlier AI mapping.',confidence:50,strength:'Medium',weakness:'',
+      suggestedImprovement:'Review and expand this evidence if needed.',sourceField:'reflection',
+      aiGenerated:true,userApproved:false,userEdited:false,userRejected:false,createdAt:nowIso(),updatedAt:nowIso()
+    });
+  });
+  return p;
+}
+function projectTextForAi(p){
+  return AI_SOURCE_FIELDS.map(f=>({field:f,text:String(p[f]||'').trim()})).filter(x=>x.text);
+}
+function allEvidence(includeRejected=false){
+  return projs.flatMap(p=>(p.evidenceItems||[]).map(e=>({...e,projectId:p.id,projectName:p.name}))).filter(e=>includeRejected||!e.userRejected);
+}
+function evidenceForProject(p,includeRejected=false){return (p.evidenceItems||[]).filter(e=>includeRejected||!e.userRejected);}
+function evidenceSummary(){
+  const ev=allEvidence();
+  const byAttr={};
+  ev.forEach(e=>{
+    const b=byAttr[e.attributeKey]||(byAttr[e.attributeKey]={total:0,Strong:0,Medium:0,Weak:0,items:[]});
+    b.total++;b[e.strength||'Medium']=(b[e.strength||'Medium']||0)+1;b.items.push(e);
+  });
+  return {items:ev,byAttr};
+}
+
+/* ── AI mapping ── */
+async function aiMap(proj){
+  const sourceBlocks=projectTextForAi(proj);
+  if(!sourceBlocks.length) return [];
+  const list=allAttrKeys();
+  const prompt=`You are an ICE Professional Review adviser reviewing evidence for a trainee civil engineer.
+
+Task:
+- Read all project fields before deciding.
+- Match only ICE attributes that are directly supported by exact text in the user's fields.
+- Extract exact evidence from the user's text; do not invent facts or infer beyond the text.
+- Include weak evidence if it is relevant, but clearly state what is missing.
+- Use only attribute keys from the provided ICE attributes list.
+
+Project fields:
+${JSON.stringify(sourceBlocks)}
+
+Project metadata:
+${JSON.stringify({tags:proj.tags||[],rams:proj.rams||0,role:proj.role||'',type:proj.projectType||'',location:proj.location||''})}
+
+ICE attributes:
+${JSON.stringify(list)}
+
+Return ONLY valid JSON in this exact shape:
+{
+  "evidenceItems": [
+    {
+      "attributeKey": "string",
+      "attributeName": "string",
+      "evidence": "exact sentence or paragraph from the project fields",
+      "rationale": "why this evidence matches the attribute",
+      "confidence": 0,
+      "strength": "Strong",
+      "weakness": "what is missing or vague",
+      "suggestedImprovement": "how the user can improve the reflection",
+      "sourceField": "reflection"
+    }
+  ]
+}
+
+Rules:
+- confidence must be 0-100.
+- strength must be exactly Strong, Medium, or Weak.
+- sourceField must be one of responsibilities, description, reflection, lessonsLearned, outcomes.
+- If evidence is weak, explain whether it lacks personal action, technical judgement, impact/outcome, numbers/details, standards used, collaboration/communication, safety/commercial/sustainability impact, or another specific gap.
+- Do not include evidence that is not copied from the project fields.
+- No markdown, comments, explanation, or text outside the JSON object.`;
+  try{
+    const BACKEND_URL=['localhost','127.0.0.1'].includes(location.hostname)?'http://localhost:3000/api/map':'https://engpath-backend.onrender.com/api/map';
+    const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    if(!r.ok){console.error('aiMap: API request failed',r.status,await r.text());return kwFallback(proj);}
+    const d=await r.json();
+    let t=d.text||'{}';
+    t=t.replace(/```json|```/g,'').trim();
+    const first=t.indexOf('{'),last=t.lastIndexOf('}');
+    if(first>-1&&last>first) t=t.slice(first,last+1);
+    const parsed=JSON.parse(t);
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('not an object');
+    return normaliseAiMap(parsed,list,proj);
+  }catch(err){console.error('aiMap failed:',err);return [];}
+}
+
+
+function normaliseAiMap(parsed,list,proj){
+  const valid=new Set(list.map(item=>item.key));
+  const byKey=Object.fromEntries(list.map(item=>[item.key,item.text]));
+  const sourceSet=new Set(AI_SOURCE_FIELDS);
+  const rawItems=Array.isArray(parsed.evidenceItems)?parsed.evidenceItems:Object.entries(parsed).map(([attributeKey,evidence])=>({attributeKey,evidence}));
+  const out=[];
+  rawItems.forEach(item=>{
+    const key=String(item.attributeKey||'').trim();
+    if(!valid.has(key)) return;
+    const evidence=String(item.evidence||'').replace(/\s+/g,' ').trim();
+    if(!evidence) return;
+    const strength=['Strong','Medium','Weak'].includes(item.strength)?item.strength:'Medium';
+    const confidence=Math.max(0,Math.min(100,parseInt(item.confidence)||0));
+    const sourceField=sourceSet.has(item.sourceField)?item.sourceField:'reflection';
+    out.push({
+      id:uid('ai'),projectId:proj.id,attributeKey:key,attributeName:item.attributeName||byKey[key]||attrName(key),
+      evidence:evidence,rationale:String(item.rationale||'').trim(),confidence,strength,
+      weakness:String(item.weakness||'').trim(),suggestedImprovement:String(item.suggestedImprovement||'').trim(),
+      sourceField,aiGenerated:true,userApproved:false,userEdited:false,userRejected:false,createdAt:nowIso(),updatedAt:nowIso()
+    });
+  });
+  return out;
+}
+
+function kwFallback(proj){
+  const txt=[proj.tech,proj.per,proj.chal,proj.other].join(' ').toLowerCase();
+  const res={};
+  ['ieng','ceng'].forEach(lvl=>ICE[lvl].forEach(g=>{
+    const hit=(KW[g.g]||[]).some(k=>txt.includes(k.toLowerCase()));
+    if(hit) g.a.forEach((_,i)=>{const k=`${lvl}_${g.g}_${i}`;if(!res[k])res[k]=`Evidenced through work on ${proj.name}.`;});
+  }));
+  return res;
+}
+
+/* ── Coverage helpers ── */
+function effectiveCov(mode){
+  const m={};
+  projs.forEach(p=>{
+    const mm=p.manMap||{};
+    evidenceForProject(p).forEach(item=>{
+      const k=item.attributeKey;
+      if(!k.startsWith(mode+'_')) return;
+      if(mm[k]===false) return;
+      if(!m[k]) m[k]=[];
+      m[k].push({proj:p.name,snip:item.evidence,type:item.aiGenerated?'ai':'manual',item});
+    });
+    Object.entries(mm).forEach(([k,v])=>{
+      if(!k.startsWith(mode+'_')||v!==true) return;
+      if(!m[k]) m[k]=[];
+      if(!m[k].find(e=>e.proj===p.name))
+        m[k].push({proj:p.name,snip:'Manually confirmed as evidenced.',type:'manual'});
+    });
+  });
+  return m;
+}
+function totalAttrs(mode){return ICE[mode].reduce((a,g)=>a+g.a.length,0);}
+function covCount(mode){return Object.keys(effectiveCov(mode)).length;}
+
+/* ── Tag helpers ── */
+function allTags(){
+  const s=new Set();
+  projs.forEach(p=>(p.tags||[]).forEach(t=>s.add(t)));
+  return[...s].sort();
+}
+function tagCounts(){
+  const m={};
+  projs.forEach(p=>(p.tags||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));
+  return m;
+}
+// Generate a consistent colour for any tag string
+function tagColor(tag){
+  const colours=['tpi','tia','tra','tgi','tcl','tld','tot'];
+  let h=0;for(let i=0;i<tag.length;i++)h=(h*31+tag.charCodeAt(i))&0xffff;
+  return colours[h%colours.length];
+}
+const CC={tpi:'var(--blue-bg)',tia:'var(--teal-bg)',tra:'var(--amber-bg)',tgi:'var(--purple-bg)',tcl:'var(--gray-bg)',tld:'var(--green-bg)',tot:'var(--gray-bg)'};
+const CT={tpi:'var(--blue-t)',tia:'var(--teal-t)',tra:'var(--amber)',tgi:'var(--purple)',tcl:'var(--gray-t)',tld:'var(--green)',tot:'var(--gray-t)'};
+function tagH(tags){
+  return(tags||[]).map(t=>{
+    const c=tagColor(t);
+    return`<span class="tag" style="background:${CC[c]};color:${CT[c]}">${esc(t)}</span>`;
+  }).join('');
+}
+
+/* ── Modal tag input ── */
+function renderModalTags(){
+  const wrap=document.getElementById('tag-input-wrap');
+  const inp=document.getElementById('tag-text-input');
+  // Remove existing pills
+  wrap.querySelectorAll('.tag-pill').forEach(el=>el.remove());
+  modalTags.forEach((t,i)=>{
+    const pill=document.createElement('span');
+    pill.className='tag-pill';
+    pill.innerHTML=`${esc(t)}<button onclick="removeModalTag(${i})" type="button"><i class="ti ti-x"></i></button>`;
+    wrap.insertBefore(pill,inp);
+  });
+}
+function removeModalTag(i){modalTags.splice(i,1);renderModalTags();}
+function handleTagInput(e){
+  const inp=e.target;
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const val=inp.value.trim().replace(/,$/,'');
+    if(val&&!modalTags.includes(val)){modalTags.push(val);renderModalTags();}
+    inp.value='';
+    hideTagSuggestions();
+  } else if(e.key==='Backspace'&&inp.value===''&&modalTags.length){
+    modalTags.pop();renderModalTags();
+  }
+}
+function showTagSuggestions(val){
+  const box=document.getElementById('tag-suggestions');
+  if(!val.trim()){box.style.display='none';return;}
+  const matches=allTags().filter(t=>t.toLowerCase().includes(val.toLowerCase())&&!modalTags.includes(t));
+  if(!matches.length){box.style.display='none';return;}
+  box.style.display='block';
+  box.innerHTML=matches.map(t=>`<button onclick="selectTagSuggestion('${t.replace(/'/g,"\\'")}');" style="display:block;width:100%;text-align:left;padding:.35rem .65rem;font-size:12.5px;background:none;border:none;cursor:pointer;color:var(--t1)" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">${esc(t)}</button>`).join('');
+}
+function selectTagSuggestion(t){
+  if(!modalTags.includes(t))modalTags.push(t);
+  renderModalTags();
+  document.getElementById('tag-text-input').value='';
+  hideTagSuggestions();
+}
+function hideTagSuggestions(){document.getElementById('tag-suggestions').style.display='none';}
+
+/* ICE labels */
+function iceLabels(p){
+  const s=new Set();
+  evidenceForProject(p).forEach(e=>{const parts=String(e.attributeKey||'').split('_');if(parts[1])s.add(`A${parts[1]}`);});
+  Object.entries(p.manMap||{}).forEach(([k,v])=>{if(v===true){const parts=k.split('_');if(parts[1])s.add(`A${parts[1]}`);}});
+  return[...s].sort();
+}
+
+/* Card HTML */
+function cardH(p){
+  const isO=expId===p.id;
+  const hasr=AI_SOURCE_FIELDS.some(f=>p[f])||p.documents;
+  const lbls=iceLabels(p);
+  const evCount=evidenceForProject(p).length;
+  const dboxes=[
+    p.dateRange?`<div class="dbox"><div class="dl">Date</div><div class="dv">${esc(p.dateRange)}</div></div>`:'',
+    p.client?`<div class="dbox"><div class="dl">Employer / client</div><div class="dv">${esc(p.client)}</div></div>`:'',
+    p.role?`<div class="dbox"><div class="dl">Role</div><div class="dv">${esc(p.role)}</div></div>`:'',
+    p.projectType?`<div class="dbox"><div class="dl">Type</div><div class="dv">${esc(p.projectType)}</div></div>`:'',
+    p.location?`<div class="dbox"><div class="dl">Location</div><div class="dv">${esc(p.location)}</div></div>`:'',
+    p.rams?`<div class="dbox"><div class="dl">RAMS</div><div class="dv">${esc(p.rams)}</div></div>`:'',
+    p.other?`<div class="dbox" style="grid-column:1/-1"><div class="dl">Legacy notes</div><div class="dv">${esc(p.other)}</div></div>`:'',
+    evCount?`<div class="dbox"><div class="dl">Evidence items</div><div class="dv">${evCount}</div></div>`:''
+  ].filter(Boolean).join('');
+  const rflH=hasr?`<div class="rfl-sec">
+    ${p.responsibilities?`<div><div class="rfl-h"><i class="ti ti-list-check" aria-hidden="true"></i> Responsibilities</div><div class="rfl-t">${esc(p.responsibilities)}</div></div>`:''}
+    ${p.description?`<div><div class="rfl-h"><i class="ti ti-file-description" aria-hidden="true"></i> Description</div><div class="rfl-t">${esc(p.description)}</div></div>`:''}
+    ${p.reflection?`<div><div class="rfl-h"><i class="ti ti-user" aria-hidden="true"></i> Reflection</div><div class="rfl-t">${esc(p.reflection)}</div></div>`:''}
+    ${p.lessonsLearned?`<div><div class="rfl-h"><i class="ti ti-bulb" aria-hidden="true"></i> Lessons learned</div><div class="rfl-t">${esc(p.lessonsLearned)}</div></div>`:''}
+    ${p.outcomes?`<div><div class="rfl-h"><i class="ti ti-chart-line" aria-hidden="true"></i> Outcomes / impact</div><div class="rfl-t">${esc(p.outcomes)}</div></div>`:''}
+    ${p.documents?`<div><div class="rfl-h"><i class="ti ti-paperclip" aria-hidden="true"></i> Documents / photos</div><div class="rfl-t">${esc(p.documents)}</div></div>`:''}
+  </div>`:`<p class="rfl-nil">No reflections yet - click Edit to add them.</p>`;
+  const iceH=lbls.length?`<div class="ice-row">${lbls.map(l=>`<span class="ice-m">ICE ${esc(l)}</span>`).join('')}</div>`:'';
+  const aiBtn=evCount?`<button class="btn" onclick="analyseProject(${p.id})"><i class="ti ti-refresh" aria-hidden="true"></i> Re-analyse with AI</button>`:`<button class="btn" onclick="analyseProject(${p.id})"><i class="ti ti-sparkles" aria-hidden="true"></i> Analyse with AI</button>`;
+  return`<div class="pcard" id="card-${p.id}">
+    <div class="card-h" onclick="toggle(${p.id})">
+      <span class="card-name">${esc(p.name)}</span>
+      <div class="card-tags">${tagH(p.tags)}</div>
+      <i class="ti ti-chevron-down chevron ${isO?'o':''}" aria-hidden="true"></i>
+    </div>
+    <div class="card-b ${isO?'o':''}" id="body-${p.id}">
+      ${dboxes?`<div class="dgrid">${dboxes}</div>`:''}
+      ${iceH}${rflH}
+      <div class="card-acts">
+        ${aiBtn}
+        <button class="btn pr" onclick="openModal(${p.id})"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+        <button class="btn dn" onclick="del(${p.id})"><i class="ti ti-trash" aria-hidden="true"></i> Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Metrics ── */
+function calcMetrics(){
+  const rams=projs.reduce((a,p)=>a+(parseInt(p.rams)||0),0);
+  const ev=evidenceSummary().items;
+  return{
+    tot:projs.length,
+    rams,
+    evidence:ev.length,
+    iC:covCount('ieng'),iT:totalAttrs('ieng'),
+    cC:covCount('ceng'),cT:totalAttrs('ceng')
+  };
+}
+
+/* ── Dashboard customise ── */
+const WIDGET_DEFS=[
+  {id:'projects',l:'Total projects',c:''},
+  {id:'evidence',l:'Evidence items',c:'t'},
+  {id:'rams',l:'Total RAMS',c:'a'},
+  {id:'ieng',l:'IEng attrs',c:'g'},
+  {id:'ceng',l:'CEng attrs',c:'c'},
+  {id:'tags',l:'Tag summary (all tags)',c:''},
+];
+
+function openDashCustomise(){
+  let old=document.getElementById('cust-overlay');if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='cust-overlay';
+  Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
+  const tagList=allTags();
+  const tagWidgets=tagList.map(t=>`tag:${t}`);
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:400px;max-height:80vh;overflow-y:auto">
+    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)">
+      <div style="font-size:13px;font-weight:500">Customise dashboard</div>
+      <button onclick="document.getElementById('cust-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.5rem">
+      <div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem">Metrics</div>
+      ${WIDGET_DEFS.map(w=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
+        <input type="checkbox" id="wcb-${w.id}" ${dashWidgets.includes(w.id)?'checked':''} style="width:15px;height:15px;cursor:pointer">
+        ${w.l}
+      </label>`).join('')}
+      ${tagList.length?`<div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-top:.5rem;margin-bottom:.25rem">Pin tags as metric cards</div>
+      ${tagList.map(t=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:.3rem 0">
+        <input type="checkbox" id="wcb-tag:${t.replace(/'/g,'\'')}" ${dashWidgets.includes('tag:'+t)?'checked':''} style="width:15px;height:15px;cursor:pointer">
+        ${esc(t)} <span style="font-size:11px;color:var(--t3)">(project count)</span>
+      </label>`).join('')}`:''}
+    </div>
+    <div style="padding:.75rem 1.1rem;border-top:.5px solid var(--b);display:flex;justify-content:flex-end;gap:7px;position:sticky;bottom:0;background:var(--surface)">
+      <button class="btn" onclick="document.getElementById('cust-overlay').remove()">Cancel</button>
+      <button class="btn pr" onclick="saveDashCustomise()">Save</button>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function saveDashCustomise(){
+  dashWidgets=WIDGET_DEFS.filter(w=>document.getElementById('wcb-'+w.id)?.checked).map(w=>w.id);
+  // Also capture pinned tags
+  allTags().forEach(t=>{
+    const cb=document.getElementById('wcb-tag:'+t);
+    if(cb&&cb.checked) dashWidgets.push('tag:'+t);
+  });
+  sv();renderDash();
+  document.getElementById('cust-overlay')?.remove();
+  toast('Dashboard updated');
+}
+
+/* ── Render dashboard ── */
+function renderDash(){
+  const m=calcMetrics();
+  document.getElementById('dash-sub').textContent=`${m.tot} projects · ${m.rams} RAMS`;
+  document.getElementById('sb-sub').textContent=`${m.tot} projects`;
+
+  // Metric cards
+  const tc=tagCounts();
+  const metricDefs={
+    projects:{l:'Projects',v:m.tot,c:''},
+    evidence:{l:'Evidence',v:m.evidence,c:'t'},
+    rams:{l:'RAMS',v:m.rams,c:'a'},
+    ieng:{l:'IEng attrs',v:`${m.iC}/${m.iT}`,c:'g'},
+    ceng:{l:'CEng attrs',v:`${m.cC}/${m.cT}`,c:'c'},
+  };
+  const metricCards=dashWidgets
+    .filter(w=>w!=='tags')
+    .map(w=>{
+      if(metricDefs[w]){const d=metricDefs[w];return`<div class="mc"><div class="ml">${d.l}</div><div class="mv ${d.c}">${d.v}</div></div>`;}
+      if(w.startsWith('tag:')){
+        const t=w.slice(4);const n=tc[t]||0;const cl=tagColor(t);
+        return`<div class="mc"><div class="ml" style="color:${CT[cl]}">${esc(t)}</div><div class="mv" style="color:${CT[cl]}">${n} <span style="font-size:13px;opacity:.6">proj</span></div></div>`;
+      }
+      return '';
+    }).join('');
+  document.getElementById('dash-metrics').innerHTML=metricCards;
+
+  // Tag summary
+  const tagEl=document.getElementById('dash-tag-summary');
+  if(dashWidgets.includes('tags')){
+    const tc=tagCounts();
+    const entries=Object.entries(tc).sort((a,b)=>b[1]-a[1]);
+    if(entries.length){
+      tagEl.innerHTML=`<div style="font-size:12.5px;font-weight:500;color:var(--t2);margin-bottom:.5rem">Tags across all projects</div><div class="tag-summary">${entries.map(([t,n])=>{
+        const c=tagColor(t);
+        return`<span class="tag-count" style="background:${CC[c]};color:${CT[c]}">${esc(t)}<span class="tc-num">${n}</span></span>`;
+      }).join('')}</div>`;
+    } else {tagEl.innerHTML='';}
+  } else {tagEl.innerHTML='';}
+
+  renderDashboardInsights();
+  document.getElementById('sb-projs').innerHTML=projs.map(p=>`<button class="pnav" onclick="jumpTo(${p.id})"><span class="pdot"></span>${esc(p.name)}</button>`).join('');
+  const recent=[...projs].slice(-3).reverse();
+  document.getElementById('dash-list').innerHTML=recent.map(cardH).join('')+(projs.length>3?`<button onclick="go('projects',document.getElementById('n-projects'))" style="margin-top:8px;font-size:12.5px;color:var(--blue);background:none;border:none;cursor:pointer;padding:.3rem 0;display:block">Show all ${projs.length} projects →</button>`:'');
+}
+
+function renderDashboardInsights(){
+  const {byAttr}=evidenceSummary();
+  const rows=allAttrKeys().map(a=>({key:a.key,name:a.text,group:a.group,...(byAttr[a.key]||{total:0,Strong:0,Medium:0,Weak:0})}));
+  const strongest=rows.filter(r=>r.total).sort((a,b)=>(b.Strong-b.Weak)-(a.Strong-a.Weak)||b.total-a.total).slice(0,3);
+  const weakest=rows.filter(r=>r.total&&r.Weak).sort((a,b)=>b.Weak-a.Weak||a.Strong-b.Strong).slice(0,3);
+  const none=rows.filter(r=>!r.total).slice(0,6);
+  const mini=(title,items,empty)=>`<div class="dbox"><div class="dl">${title}</div>${items.length?items.map(r=>`<div class="dv" style="margin-bottom:4px">${esc(r.name)} <span class="pill">S${r.Strong||0} M${r.Medium||0} W${r.Weak||0}</span></div>`).join(''):`<div class="dv">${empty}</div>`}</div>`;
+  document.getElementById('dash-insights').innerHTML=`<div class="dgrid" style="margin-bottom:1.5rem">
+    ${mini('Strongest attributes',strongest,'No evidence yet')}
+    ${mini('Weakest attributes',weakest,'No weak evidence yet')}
+    <div class="dbox" style="grid-column:1/-1"><div class="dl">Attributes with no evidence</div><div class="dv">${none.length?none.map(r=>esc(r.name)).join(' · '):'All listed attributes have at least one evidence item.'}</div></div>
+  </div>`;
+}
+
+/* ── Render projects ── */
+function renderProjs(){
+  const tags=['all',...allTags()];
+  document.getElementById('proj-chips').innerHTML=tags.map(t=>`<button class="chip ${filt===t?'on':''}" onclick="setFilt('${t.replace(/'/g,"\\'")}',this)">${t==='all'?'All':esc(t)}</button>`).join('');
+  const fp=filt==='all'?projs:projs.filter(p=>(p.tags||[]).includes(filt));
+  document.getElementById('proj-list').innerHTML=fp.map(cardH).join('')||'<p style="color:var(--t3);font-size:12.5px;padding:.75rem 0">No projects match this filter.</p>';
+}
+
+/* Render deliverables */
+function renderSum(){
+  const rows=projs.map(p=>{
+    return`<tr><td>${esc(p.name)}</td><td>${(p.tags||[]).map(t=>`<span class="tag" style="background:${CC[tagColor(t)]};color:${CT[tagColor(t)]}">${esc(t)}</span>`).join(' ')||'-'}</td><td><span class="pill ${p.rams?'on':''}">${esc(p.rams||'-')}</span></td><td style="font-size:12px;color:var(--t2)">${esc(p.other||'-')}</td></tr>`;
+  }).join('');
+  document.getElementById('sum-tbl').innerHTML=`<thead><tr><th>Project</th><th>Tags</th><th>RAMS</th><th>Notes</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* ── Render attributes ── */
+function renderAttrs(){
+  const mode=aMode;
+  const ec=effectiveCov(mode);
+  const tot=totalAttrs(mode);const cov=Object.keys(ec).length;const pct=Math.round(cov/tot*100);
+  document.getElementById('attr-prog').innerHTML=`<div class="prog-wrap">
+    <div class="prog-top"><div class="prog-label">${mode==='ieng'?'IEng':'CEng'} (MICE) — attributes covered</div><div class="prog-num">${cov} <span style="font-size:13px;color:var(--t3)">/ ${tot}</span></div></div>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="prog-sub">${pct}% complete · ${tot-cov} still to evidence</div>
+  </div>`;
+  document.getElementById('attr-groups').innerHTML=ICE[mode].map(g=>{
+    const gc=g.a.filter((_,i)=>ec[`${mode}_${g.g}_${i}`]).length;
+    const items=g.a.map((a,i)=>{
+      const k=`${mode}_${g.g}_${i}`;
+      const entries=ec[k]||[];
+      const isCv=entries.length>0;
+      const aiEntries=entries.filter(e=>e.type==='ai');
+      const manEntries=entries.filter(e=>e.type==='manual');
+      const chkClass=isCv?(manEntries.length&&!aiEntries.length?'achk man':'achk cv'):'achk';
+      const textCls=isCv?(manEntries.length&&!aiEntries.length?'atext man':'atext cv'):'atext';
+      const evTags=entries.map(e=>`<span class="a-ev ${e.type==='ai'?'ai-ev':'man-ev'}" title="${esc(e.snip)}"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)}${e.type==='manual'?' (manual)':''}</span>`).join('');
+      return`<div class="aitem">
+        <div class="${chkClass}" onclick="pickProjToggle('${k}')">${isCv?'<i class="ti ti-check" aria-hidden="true"></i>':''}</div>
+        <div style="flex:1">
+          <div class="${textCls}">${esc(a)}</div>
+          ${isCv?`<div class="a-evs">${evTags}</div>`:''}
+          ${!isCv?`<div style="font-size:11px;color:var(--t3);margin-top:2px">Click checkbox to manually mark as covered</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    return`<div class="agroup">
+      <div class="ag-h" onclick="toggleGrp(this)">
+        <div class="ag-num">${g.g}</div>
+        <div class="ag-name">${g.n}</div>
+        <div class="ag-prog" style="color:${gc===g.a.length?'var(--teal)':'var(--t3)'}">${gc}/${g.a.length}</div>
+        <i class="ti ti-chevron-down ag-chev o" aria-hidden="true"></i>
+      </div>
+      <div class="ag-body o">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+/* Render evidence */
+function renderEvid(){
+  const mode=eMode;const ec=effectiveCov(mode);
+  document.getElementById('ev-list').innerHTML=ICE[mode].flatMap(g=>g.a.map((a,i)=>{
+    const k=`${mode}_${g.g}_${i}`;
+    const entries=ec[k]||[];
+    const isCv=entries.length>0;
+    const cls=isCv?'cv':'nc';
+    const eH=isCv?entries.map(e=>{
+      const item=e.item;
+      if(!item){return`<div class="ev-entry"><div class="ev-proj"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)} · manual</div><div class="ev-snip">${esc(e.snip)}</div></div>`;}
+      const badge=item.userApproved?'Approved':(item.userEdited?'Edited':'AI draft');
+      return`<div class="ev-entry">
+        <div class="ev-proj"><i class="ti ti-folder" aria-hidden="true"></i>${esc(e.proj)} · ${esc(item.sourceField||'reflection')} · ${badge}</div>
+        <div class="ev-snip"><strong>Evidence:</strong> ${esc(item.evidence)}</div>
+        ${item.rationale?`<div class="ev-snip"><strong>Rationale:</strong> ${esc(item.rationale)}</div>`:''}
+        <div class="ev-snip"><strong>Strength:</strong> ${esc(item.strength||'Medium')} · <strong>Confidence:</strong> ${esc(item.confidence||0)}%</div>
+        ${item.weakness?`<div class="ev-snip"><strong>Weakness:</strong> ${esc(item.weakness)}</div>`:''}
+        ${item.suggestedImprovement?`<div class="ev-snip"><strong>Suggested improvement:</strong> ${esc(item.suggestedImprovement)}</div>`:''}
+        <div class="card-acts" style="margin-top:.5rem;flex-wrap:wrap">
+          <button class="btn pr" onclick="approveEvidence('${item.id}')"><i class="ti ti-check" aria-hidden="true"></i> Approve</button>
+          <button class="btn" onclick="editEvidence('${item.id}')"><i class="ti ti-edit" aria-hidden="true"></i> Edit</button>
+          <button class="btn dn" onclick="rejectEvidence('${item.id}')"><i class="ti ti-x" aria-hidden="true"></i> Reject</button>
+          <button class="btn" onclick="removeEvidenceTag('${item.id}')"><i class="ti ti-tag-off" aria-hidden="true"></i> Remove tag</button>
+          <select onchange="changeEvidenceStrength('${item.id}',this.value)" style="font-size:11.5px;padding:4px 8px;border:.5px solid var(--bm);border-radius:7px;background:var(--surface);color:var(--t1)">
+            ${['Strong','Medium','Weak'].map(s=>`<option value="${s}" ${item.strength===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+    }).join(''):`<p class="ev-nil">No evidence yet - add project detail or manually confirm in the attribute tracker.</p>`;
+    return`<div class="ev-card">
+      <div class="ev-h">
+        <div class="ev-num ${cls}">${g.g}</div>
+        <div class="ev-info"><div class="ev-grp">Group ${g.g} - ${esc(g.n)}</div><div class="ev-attr">${esc(a)}</div></div>
+        <span class="ev-badge ${cls}">${isCv?`${entries.length} item${entries.length===1?'':'s'}`:'Not yet covered'}</span>
+      </div>
+      <div class="ev-entries">${eH}</div>
+    </div>`;
+  })).join('');
+}
+
+/* ── Manual toggle ── */
+function toggleManual(projId,key){
+  const p=projs.find(x=>x.id===projId);if(!p) return;
+  if(!p.manMap) p.manMap={};
+  const hasAI=evidenceForProject(p).some(e=>e.attributeKey===key);
+  const cur=p.manMap[key];
+  if(cur===undefined){if(hasAI){p.manMap[key]=false;}else{p.manMap[key]=true;}}
+  else if(cur===true){p.manMap[key]=false;}
+  else{delete p.manMap[key];}
+  sv();renderAttrs();renderEvid();
+}
+
+function pickProjToggle(key){
+  if(projs.length===1){toggleManual(projs[0].id,key);return;}
+  showPickerModal(key);
+}
+
+function showPickerModal(key){
+  let old=document.getElementById('pick-overlay');if(old)old.remove();
+  const mode=key.split('_')[0];const parts=key.split('_');const gIdx=+parts[1]-1;const aIdx=+parts[2];
+  const g=ICE[mode][gIdx];const attrName=g?g.a[aIdx]:'Attribute';
+  const overlay=document.createElement('div');
+  overlay.id='pick-overlay';
+  Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:440px;overflow:hidden">
+    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:11px;color:var(--t3);margin-bottom:2px">Toggle attribute coverage</div><div style="font-size:13px;font-weight:500">${esc(attrName)}</div></div>
+      <button onclick="document.getElementById('pick-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:.75rem .9rem">
+      <div style="font-size:11.5px;color:var(--t2);margin-bottom:.6rem">Select a project to toggle:</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${projs.map(p=>{
+          const ai=evidenceForProject(p).some(e=>e.attributeKey===key);
+          const mm=(p.manMap||{})[key];
+          let state='',stateC='';
+          if(mm===true){state='Manually on';stateC='color:var(--blue)';}
+          else if(mm===false){state='Manually off';stateC='color:var(--coral)';}
+          else if(ai){state='AI covered';stateC='color:var(--teal)';}
+          else{state='Not covered';stateC='color:var(--t3)';}
+          return`<button onclick="toggleManual(${p.id},'${key}');document.getElementById('pick-overlay').remove();renderAttrs();renderEvid();" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:.5rem .7rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);cursor:pointer;font-size:12.5px;color:var(--t1);text-align:left" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background='var(--surface2)'">
+            <span>${esc(p.name)}</span><span style="font-size:11px;${stateC}">${state}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+/* ── Interactions ── */
+function setAMode(m,btn){aMode=m;document.querySelectorAll('#view-attrs .mtab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAttrs();}
+function setEMode(m,btn){eMode=m;document.querySelectorAll('#view-evid .mtab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderEvid();}
+function toggleGrp(h){const b=h.nextElementSibling;const c=h.querySelector('.ag-chev');b.classList.toggle('o');c.classList.toggle('o');}
+function setFilt(t,btn){filt=t;document.querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderProjs();}
+function toggle(id){expId=expId===id?null:id;rerender();}
+function curView(){return document.querySelector('.view.on').id.replace('view-','');}
+function rerender(){const v=curView();if(v==='dash')renderDash();else if(v==='projects')renderProjs();else if(v==='summary')renderSum();else if(v==='attrs')renderAttrs();else if(v==='evid')renderEvid();}
+function go(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.querySelectorAll('.nav').forEach(b=>b.classList.remove('on'));document.getElementById('view-'+id).classList.add('on');if(btn)btn.classList.add('on');if(id==='dash')renderDash();else if(id==='projects')renderProjs();else if(id==='summary')renderSum();else if(id==='attrs')renderAttrs();else if(id==='evid')renderEvid();}
+function jumpTo(id){go('projects',document.getElementById('n-projects'));expId=id;renderProjs();setTimeout(()=>{const el=document.getElementById('card-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}
+
+function openModal(id){
+  document.getElementById('modal-title').textContent=id?'Edit project':'Add project';
+  document.getElementById('eid').value=id||'';
+  const p=id?projs.find(x=>x.id===id):null;
+  document.getElementById('f-name').value=p?(p.name||''):'';
+  PROJECT_FIELDS.concat(['other']).forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=p?(p[f]||''):'';});
+  document.getElementById('f-rams').value=p?(p.rams||''):'';
+  modalTags=p?[...(p.tags||[])]:[];
+  renderModalTags();
+  document.getElementById('tag-text-input').value='';
+  hideTagSuggestions();
+  document.getElementById('modal').classList.add('o');
+}
+function closeModal(){document.getElementById('modal').classList.remove('o');}
+
+async function saveProject(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){alert('Please enter a project name.');return;}
+  const pendingTag=document.getElementById('tag-text-input').value.trim();
+  if(pendingTag&&!modalTags.includes(pendingTag))modalTags.push(pendingTag);
+  document.getElementById('tag-text-input').value='';
+  const id=document.getElementById('eid').value;
+  const data={name,tags:[...modalTags],rams:parseInt(document.getElementById('f-rams').value)||0};
+  PROJECT_FIELDS.concat(['other']).forEach(f=>{const el=document.getElementById('f-'+f);data[f]=el?el.value.trim():'';});
+  closeModal();
+  if(id){const i=projs.findIndex(p=>p.id===+id);if(i>-1)projs[i]={...projs[i],...data};}
+  else{data.id=nid++;data.aiMap={};data.manMap={};data.evidenceItems=[];projs.push(data);}
+  projs.forEach(migrateProject);
+  await sv();rerender();
+  toast(id?'Project updated':'Project added');
+}
+
+function del(id){if(!confirm('Delete this project?'))return;projs=projs.filter(p=>p.id!==id);if(expId===id)expId=null;sv();toast('Deleted');rerender();}
+
+async function analyseProject(id){
+  const p=projs.find(x=>x.id===id);if(!p)return;
+  if(!projectTextForAi(p).length){toast('Add project text before AI analysis');return;}
+  if(evidenceForProject(p,true).length&&!confirm('Re-analyse with AI? Existing AI evidence for this project will be replaced. Approved manual edits are kept only if they were user edited.'))return;
+  toast('Analysing with AI...');
+  const items=await aiMap(p);
+  const keep=(p.evidenceItems||[]).filter(e=>(e.userEdited||e.userApproved)&&!e.userRejected);
+  p.evidenceItems=keep.concat(items);
+  p.aiMap={};
+  items.forEach(e=>{p.aiMap[e.attributeKey]=e.evidence;});
+  p.aiAnalysedAt=nowIso();
+  await sv();rerender();
+  toast(`AI added ${items.length} evidence item${items.length===1?'':'s'}`);
+}
+
+function findEvidence(id){
+  for(const p of projs){const e=(p.evidenceItems||[]).find(x=>x.id===id);if(e)return{project:p,item:e};}
+  return{};
+}
+function approveEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  item.userApproved=true;item.userRejected=false;item.updatedAt=nowIso();sv();rerender();toast('Evidence approved');
+}
+function rejectEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  item.userRejected=true;item.userApproved=false;item.updatedAt=nowIso();sv();rerender();toast('Evidence rejected');
+}
+function changeEvidenceStrength(id,strength){
+  const {item}=findEvidence(id);if(!item)return;
+  item.strength=strength;item.userEdited=true;item.updatedAt=nowIso();sv();rerender();
+}
+function editEvidence(id){
+  const {item}=findEvidence(id);if(!item)return;
+  const evidence=prompt('Edit evidence text:',item.evidence);if(evidence===null)return;
+  const rationale=prompt('Edit rationale:',item.rationale||'');if(rationale===null)return;
+  const improvement=prompt('Edit suggested improvement:',item.suggestedImprovement||'');if(improvement===null)return;
+  item.evidence=evidence.trim();item.rationale=rationale.trim();item.suggestedImprovement=improvement.trim();
+  item.userEdited=true;item.updatedAt=nowIso();sv();rerender();toast('Evidence updated');
+}
+function removeEvidenceTag(id){
+  if(!confirm('Remove this evidence item from the attribute?'))return;
+  rejectEvidence(id);
+}
+
+/* ── Share / Export / Import ── */
+function openShareModal(){
+  let old=document.getElementById('share-overlay');if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='share-overlay';
+  Object.assign(overlay.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,.35)',zIndex:'200',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'});
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:12px;border:.5px solid var(--bm);width:100%;max-width:480px;overflow:hidden">
+    <div style="padding:.9rem 1.1rem;border-bottom:.5px solid var(--b);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:500">Share your profile</div>
+      <button onclick="document.getElementById('share-overlay').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.8rem">
+      <div style="font-size:12px;color:var(--t2);line-height:1.5">Anyone who opens this link will see a read-only copy of your projects.</div>
+      <div style="display:flex;gap:6px">
+        <input id="share-link" readonly style="flex:1;font-size:11.5px;padding:.5rem .6rem;border-radius:7px;border:.5px solid var(--bm);background:var(--surface2);color:var(--t1)" value="Generating…">
+        <button class="btn pr" onclick="copyShareLink()"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+      </div>
+      <button class="btn" style="justify-content:center" onclick="exportFile()"><i class="ti ti-file-export" aria-hidden="true"></i> Download profile file (.json)</button>
+    </div>
+  </div>`;
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+  const payload=buildSharePayload();
+  const link=`${location.origin}${location.pathname}#share=${payload}`;
+  document.getElementById('share-link').value=link;
+}
+function buildSharePayload(){return btoa(encodeURIComponent(JSON.stringify({name:'EngPath profile',exportedAt:new Date().toISOString(),projs})));}
+function copyShareLink(){const el=document.getElementById('share-link');el.select();navigator.clipboard?.writeText(el.value).then(()=>toast('Link copied')).catch(()=>{document.execCommand('copy');toast('Link copied');});}
+function exportFile(){
+  const blob=new Blob([JSON.stringify({name:'EngPath profile',exportedAt:new Date().toISOString(),projs},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`engpath-profile-${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Profile downloaded');
+}
+function importFile(ev){
+  const file=ev.target.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{handleIncomingProfile(JSON.parse(reader.result));}catch(err){alert('Could not read that file.');}};
+  reader.readAsText(file);ev.target.value='';
+}
+function handleIncomingProfile(data){
+  if(!data||!Array.isArray(data.projs)){alert('Invalid EngPath profile.');return;}
+  if(!confirm(`Replace your ${projs.length} project(s) with ${data.projs.length} from this profile?`)) return;
+  projs=JSON.parse(JSON.stringify(data.projs));
+  nid=Math.max(100,...projs.map(p=>p.id||0))+1;
+  projs.forEach(migrateProject);
+  sv();rerender();toast('Profile imported');
+}
+function checkIncomingShareLink(){
+  const m=location.hash.match(/share=([^&]+)/);if(!m) return;
+  try{
+    const data=JSON.parse(decodeURIComponent(atob(m[1])));
+    if(!data||!Array.isArray(data.projs)) return;
+    setTimeout(()=>{
+      if(confirm(`Import shared profile with ${data.projs.length} project(s)?`)){handleIncomingProfile(data);}
+      history.replaceState(null,'',location.pathname+location.search);
+    },300);
+  }catch(err){console.error('Could not parse shared link:',err);}
+}
+
+/* ── Boot ── */
+// Hide app until logged in
+document.querySelector('.app').style.display='none';
+// Check if already logged in
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session){
+    currentUser=session.user;
+    showApp();
+  } else {
+    showAuth();
+  }
+});
+</script>
+</body>
+</html>
