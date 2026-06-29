@@ -6,7 +6,7 @@ app.use(express.json({ limit: '1mb' }));
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map(origin => origin.trim())
@@ -59,7 +59,7 @@ app.post('/api/map', rateLimit, async (req, res) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/interactions',
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
       {
         method: 'POST',
         headers: {
@@ -68,37 +68,11 @@ app.post('/api/map', rateLimit, async (req, res) => {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: MODEL,
-          input: prompt,
-          generation_config: {
-            max_output_tokens: 4096,
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
             temperature: 0.1,
-          },
-          response_format: {
-            type: 'text',
-            mime_type: 'application/json',
-            schema: {
-              type: 'object',
-              properties: {
-                evidenceItems: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      attributeKey: { type: 'string' },
-                      attributeName: { type: 'string' },
-                      evidence: { type: 'string' },
-                      rationale: { type: 'string' },
-                      confidence: { type: 'number' },
-                      strength: { type: 'string' },
-                      weakness: { type: 'string' },
-                      suggestedImprovement: { type: 'string' },
-                      sourceField: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
+            maxOutputTokens: 4096,
+            responseMimeType: 'application/json',
           },
         }),
       }
@@ -119,16 +93,7 @@ app.post('/api/map', rateLimit, async (req, res) => {
       return res.status(response.status).json({ error: data.error?.message || 'Gemini API error' });
     }
 
-    // Extract the text from Gemini's response format
-    const text =
-      data.output_text ||
-      data.outputText ||
-      data.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim() ||
-      data.steps?.flatMap(step => step.content || step.output || [])
-        .map(part => part.text || '')
-        .join('')
-        .trim() ||
-      '';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!text) {
       const finishReason = data.candidates?.[0]?.finishReason;
       return res.status(502).json({ error: `Gemini returned no text${finishReason ? ` (${finishReason})` : ''}.` });
