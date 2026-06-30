@@ -296,6 +296,58 @@ td:first-child{color:var(--t1);font-weight:500}
 .home-footer{border-top:1px solid var(--home-line);padding:26px 0 18px}.footer-grid{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:36px}.home-footer p,.home-footer a{font-size:13px;color:var(--home-muted);text-decoration:none;line-height:1.9}.home-footer h4{font-size:13px;margin-bottom:9px}.socials{display:flex;gap:10px}.socials span{width:34px;height:34px;border:1px solid var(--home-line);border-radius:9px;display:grid;place-items:center}.copyright{text-align:center;border-top:1px solid var(--home-line);margin-top:22px;padding-top:13px;font-size:12px;color:var(--home-muted)}
 @media(max-width:1180px){.home-links{gap:18px}.home-search{width:210px}.home-hero{grid-template-columns:1fr;min-height:0}.home-blueprint{height:280px;justify-content:center}.discipline-grid{grid-template-columns:repeat(3,1fr)}.discipline-card,.discipline-card:last-child{border:1px solid var(--home-line);border-radius:10px}.project-grid,.stats-strip{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:0}.home-final{grid-template-columns:1fr}.home-building{display:none}}
 @media(max-width:760px){.home-shell{width:min(100% - 24px,1168px)}.home-nav{height:auto;padding:16px 0;flex-wrap:wrap}.home-logo{width:136px}.home-links{display:none}.home-actions{width:100%;justify-content:space-between}.home-search{order:2;width:100%;margin-top:8px}.home-hero{padding-top:28px}.home-hero h1{font-size:40px}.home-hero h1 .hero-line{white-space:normal}.home-hero p{font-size:15px}.home-blueprint{height:220px}.discipline-grid,.project-grid,.stats-strip,.footer-grid{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--home-line)}.stat:last-child{border-bottom:0}.home-final{padding:24px}.home-signin{padding:0 16px}}
+
+/* ═══════════════════════════════════════════════════════════
+   HERO ANIMATION — EngPath V2
+   State machine: idle → logo → bridge → content → cards → complete
+   Timing constants live in HeroAnim.T (see bottom of script).
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ─────────────────────────────────────────── */
+@keyframes ha-fade{from{opacity:0}to{opacity:1}}
+@keyframes ha-rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ha-draw{
+  /* Stage 3 (0–43% ≈ 0–1.2s):  bridge foundation — deliberate start
+     Stage 4 (43–79% ≈ 1.2–2.2s): towers, deck, cables — steady pace
+     Stage 5 (79–100% ≈ 2.2–2.8s): skyline + final details — gentle finish */
+  from{clip-path:inset(0 100% 0 0);opacity:1}
+  43%{clip-path:inset(0 60% 0 0)}
+  79%{clip-path:inset(0 15% 0 0)}
+  to{clip-path:inset(0 0% 0 0);opacity:1}
+}
+
+/* ── Initial hidden states (applied by JS stageInit) ───── */
+.ha-hidden{opacity:0!important}
+.ha-hidden-illus{opacity:0!important;clip-path:inset(0 100% 0 0)!important}
+
+/* ── Stage animation classes (added per-element by JS) ─── */
+.ha-anim-fade{animation:ha-fade .5s cubic-bezier(.25,.46,.45,.94) forwards}
+.ha-anim-rise{animation:ha-rise .65s cubic-bezier(.25,.46,.45,.94) forwards}
+.ha-anim-draw{animation:ha-draw 2.8s cubic-bezier(.37,0,.63,1) forwards;opacity:1!important}
+/* Discipline card stagger — delay matches HeroAnim.T.CARD_STAGGER */
+.ha-card-1{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 0ms   forwards}
+.ha-card-2{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 80ms  forwards}
+.ha-card-3{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 160ms forwards}
+.ha-card-4{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 240ms forwards}
+.ha-card-5{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 320ms forwards}
+.ha-card-6{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 400ms forwards}
+
+/* ── Complete state: guarantee no lingering clip or hidden ─ */
+.ha-complete .home-nav,
+.ha-complete .home-hero>div:first-child,
+.ha-complete .home-blueprint,
+.ha-complete .discipline-card{opacity:1!important;transform:none!important}
+.ha-complete .home-blueprint{clip-path:none!important}
+
+/* ── Reduced motion: skip all animation, show immediately ── */
+@media(prefers-reduced-motion:reduce){
+  .ha-hidden,.ha-hidden-illus,
+  .ha-anim-fade,.ha-anim-rise,.ha-anim-draw,
+  .ha-card-1,.ha-card-2,.ha-card-3,.ha-card-4,.ha-card-5,.ha-card-6{
+    animation:none!important;opacity:1!important;
+    transform:none!important;clip-path:none!important
+  }
+}
 </style>
 </head>
 <body>
@@ -625,12 +677,14 @@ async function authSubmit(){
   }catch(e){errEl.textContent='Something went wrong. Please try again.';errEl.classList.add('on');document.getElementById('auth-btn').textContent=authMode==='signin'?'Sign in':'Create account';}
 }
 function showApp(){
+  HeroAnim?.cancel?.();
   document.getElementById('home-page')?.classList.remove('on');
   document.getElementById('auth-screen').style.display='none';
   document.querySelector('.app').style.display='flex';
   load();
 }
 function showAuth(){
+  HeroAnim?.cancel?.();
   document.getElementById('home-page')?.classList.remove('on');
   document.getElementById('auth-screen').style.display='flex';
   document.querySelector('.app').style.display='none';
@@ -1429,11 +1483,110 @@ function checkIncomingShareLink(){
   }catch(err){console.error('Could not parse shared link:',err);}
 }
 
+/* ═══════════════════════════════════════════════════════════
+   HeroAnim — Homepage hero animation state machine
+   States: idle → logo → bridge → content → cards → complete
+
+   NOTE: The hero SVG is a vector-traced raster (flat filled paths,
+   no stroke elements). SVG line-drawing (stroke-dashoffset) is not
+   possible on this asset. The "drawing" effect is achieved via a
+   clip-path inset wipe (left → right), which is GPU-composited and
+   zero layout-shift. Optimise SVG asset in a later pass (ISSUE-010).
+   ═══════════════════════════════════════════════════════════ */
+const HeroAnim=(()=>{
+  /* ── Timeline constants (ms) — edit here, not scattered below ── */
+  const T={
+    LOGO_START   :500,   // Stage 2: nav fades in
+    BRIDGE_START :1000,  // Stage 3-5: illustration wipes in (runs 2800ms)
+    CONTENT_START:4200,  // Stage 7: hero text/headline/buttons rise in
+    CARDS_START  :4800,  // Stage 8: discipline cards stagger in
+    COMPLETE     :5600,  // Cleanup: strip animation classes, mark done
+    CARD_STAGGER :80,    // ms between each card (matches ha-card-N CSS delays)
+  };
+
+  let _state='idle';
+  const _timers=[];
+  let _nav,_heroText,_illus,_cards;
+
+  function _set(s){_state=s;}
+  function _sched(fn,ms){_timers.push(setTimeout(fn,ms));}
+
+  /* ── Stages ─────────────────────────────────────────────── */
+  function _stageInit(){
+    _set('idle');
+    _nav.classList.add('ha-hidden');
+    _heroText.classList.add('ha-hidden');
+    _illus.classList.add('ha-hidden-illus');
+    _cards.forEach(c=>c.classList.add('ha-hidden'));
+  }
+  function _stageLogo(){
+    _set('logo');
+    _nav.classList.remove('ha-hidden');
+    _nav.classList.add('ha-anim-fade');
+  }
+  function _stageBridge(){
+    _set('bridge');
+    _illus.classList.remove('ha-hidden-illus');
+    _illus.classList.add('ha-anim-draw');
+  }
+  function _stageContent(){
+    _set('content');
+    _heroText.classList.remove('ha-hidden');
+    _heroText.classList.add('ha-anim-rise');
+  }
+  function _stageCards(){
+    _set('cards');
+    _cards.forEach((c,i)=>{
+      c.classList.remove('ha-hidden');
+      c.classList.add(`ha-card-${i+1}`);
+    });
+  }
+  function _stageComplete(){
+    _set('complete');
+    // Strip animation classes to release GPU resources
+    _nav.classList.remove('ha-anim-fade');
+    _illus.classList.remove('ha-anim-draw');
+    _heroText.classList.remove('ha-anim-rise');
+    _cards.forEach((c,i)=>c.classList.remove(`ha-card-${i+1}`));
+    document.getElementById('home-page')?.classList.add('ha-complete');
+  }
+
+  /* ── Public API ─────────────────────────────────────────── */
+
+  /* cancel(): called by showApp/showAuth if navigation interrupts animation */
+  function cancel(){
+    _timers.forEach(clearTimeout);
+    _timers.length=0;
+    if(_state!=='idle'&&_state!=='complete')_stageComplete();
+  }
+
+  /* run(): called once on page load */
+  function run(){
+    _nav     =document.querySelector('.home-nav');
+    _heroText=document.querySelector('.home-hero > div:first-child');
+    _illus   =document.querySelector('.home-blueprint');
+    _cards   =Array.from(document.querySelectorAll('.discipline-card'));
+
+    // Reduced motion: CSS already shows everything; JS does nothing extra.
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+
+    _stageInit();
+    _sched(_stageLogo,    T.LOGO_START);
+    _sched(_stageBridge,  T.BRIDGE_START);
+    _sched(_stageContent, T.CONTENT_START);
+    _sched(_stageCards,   T.CARDS_START);
+    _sched(_stageComplete,T.COMPLETE);
+  }
+
+  return{run,cancel,T};
+})();
+
 /* ── Boot ── */
 // Show public homepage first; app/auth is entered from the homepage.
 document.querySelector('.app').style.display='none';
 document.getElementById('auth-screen').style.display='none';
 showHome();
+HeroAnim.run();
 sb.auth.getSession().then(({data:{session}})=>{
   if(session){
     currentUser=session.user;
