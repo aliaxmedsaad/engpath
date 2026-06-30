@@ -122,3 +122,18 @@ The Gemini free tier is returning HTTP 429 responses under quota pressure. The b
 - Development and UI work continues independently of this issue
 
 > This issue does not block V2 development.
+
+---
+
+## ISSUE-010 — Hero SVG Assets Oversized (~3.2MB each)
+
+**Priority: Medium**
+**Status: Open**
+
+Hero SVG assets are visually correct but currently oversized (~3.2MB each). Optimisation required in a later performance pass.
+
+The homepage hero illustrations (`assets/illustrations/hero-bridge-light.svg` and `hero-bridge-dark.svg`) are Adobe/vector-traced artwork containing tens of thousands of path nodes, replacing a weak CSS placeholder. Visual correctness was prioritised over file size for this pass.
+
+**Action required:**
+- Run through SVGO or re-export lighter, simplified versions
+- Re-verify visual fidelity after optimisation
