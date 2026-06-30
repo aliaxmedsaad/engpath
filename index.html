@@ -257,12 +257,22 @@ td:first-child{color:var(--t1);font-weight:500}
   --beige-50:#F5F1E8;--white:#FFFFFF;--text-dark:#1F2937;--text-light:#F8FAFC;--text-muted-light:#64748B;--text-muted-dark:#94A3B8;--accent-blue:#1D4ED8;--accent-blue-hover:#1E40AF;
   --home-bg:#FBFAF7;--home-card:#FFFFFF;--home-text:var(--navy-800);--home-muted:var(--text-muted-light);--home-line:rgba(15,23,42,.12);--home-soft:var(--beige-50);--home-shadow:0 18px 48px rgba(15,23,42,.08);
   position:relative;color-scheme:light;display:none;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 18% 0%,rgba(255,255,255,.95),transparent 34%),linear-gradient(135deg,#FFFFFF 0%,var(--beige-50) 100%);color:var(--home-text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
-  /* CSS timing variables for homepage animation */
+  /* CSS timing variables (shared by both themes) for homepage animation */
   --cl-start:0.4s;--cl-dur:1.6s;--bg-start:1.2s;--bg-dur:1.8s;--ov-start:3.0s;--ov-dur:0.4s;--cl-ease:cubic-bezier(0.37,0,0.63,1);
+  /* Theme variables for immersive background — light mode (default) */
+  --hero-bg-opacity:.55;
+  --cl-line:rgba(83,72,58,.28);
+  --cl-line-soft:rgba(83,72,58,.18);
+  --hero-overlay:linear-gradient(to right,rgba(246,241,232,.92) 0%,rgba(246,241,232,.78) 35%,rgba(246,241,232,.45) 56%,rgba(246,241,232,.14) 72%,transparent 88%);
 }
 :root[data-home-theme="dark"] .home-page{
   --home-bg:var(--navy-950);--home-card:var(--navy-card);--home-text:var(--text-light);--home-muted:var(--text-muted-dark);--home-line:rgba(226,232,240,.14);--home-soft:var(--navy-850);--home-shadow:0 24px 70px rgba(0,0,0,.38);
   color-scheme:dark;background:radial-gradient(circle at 18% 0%,rgba(29,78,216,.16),transparent 34%),linear-gradient(135deg,#08111F 0%,#050B16 100%);
+  /* Theme variables for immersive background — dark mode */
+  --hero-bg-opacity:.82;
+  --cl-line:rgba(99,163,255,.24);
+  --cl-line-soft:rgba(99,163,255,.18);
+  --hero-overlay:linear-gradient(to right,rgba(5,11,22,.90) 0%,rgba(5,11,22,.75) 35%,rgba(5,11,22,.42) 56%,rgba(5,11,22,.12) 72%,transparent 88%);
 }
 .home-page.on{display:block}
 .home-shell{width:min(1168px,calc(100% - 48px));margin:0 auto;position:relative;z-index:1}
@@ -300,17 +310,17 @@ td:first-child{color:var(--t1);font-weight:500}
 @media(max-width:760px){.home-shell{width:min(100% - 24px,1168px)}.home-nav{height:auto;padding:16px 0;flex-wrap:wrap}.home-logo{width:136px}.home-links{display:none}.home-actions{width:100%;justify-content:space-between}.home-search{order:2;width:100%;margin-top:8px}.home-hero{padding-top:28px}.home-hero h1{font-size:40px}.home-hero h1 .hero-line{white-space:normal}.home-hero p{font-size:15px}.home-blueprint{height:220px}.discipline-grid,.project-grid,.stats-strip,.footer-grid{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--home-line)}.stat:last-child{border-bottom:0}.home-final{padding:24px}.home-signin{padding:0 16px}}
 
 /* ═══════════════════════════════════════════════════════════
-   IMMERSIVE BACKGROUND LAYER (dark mode only)
+   IMMERSIVE BACKGROUND LAYER (shared system, both themes)
    .homepage-bg sits at z-index:0 inside #home-page (position:relative)
    .home-shell sits at z-index:1 above it.
+   Colours/asset/overlay are theme-driven via CSS variables defined
+   on .home-page (light) and :root[data-home-theme="dark"] .home-page
+   (dark) above — the animation rules below are identical for both.
    ═══════════════════════════════════════════════════════════ */
 
-/* Hide background entirely in light mode */
-:root:not([data-home-theme="dark"]) .homepage-bg{display:none}
-
-/* In dark mode the bridge moves to a full-page background;
-   hide the original right-column illustration to avoid duplication */
-:root[data-home-theme="dark"] .home-blueprint{visibility:hidden}
+/* The right-column illustration is replaced by the full-page
+   background in both themes; keep the grid column for layout balance */
+.home-blueprint{visibility:hidden}
 
 /* ── Background container ───────────────────────────────── */
 .homepage-bg{
@@ -318,7 +328,7 @@ td:first-child{color:var(--t1);font-weight:500}
   pointer-events:none;overflow:hidden;
 }
 
-/* ── Bridge artwork ─────────────────────────────────────── */
+/* ── Bridge artwork — light/dark asset toggled like .home-bridge-* ── */
 .hero-artwork-bg{
   position:absolute;inset:0;
   width:100%;height:100%;
@@ -326,19 +336,15 @@ td:first-child{color:var(--t1);font-weight:500}
   opacity:0;
   animation:ha-bg-fade var(--bg-dur) ease var(--bg-start) forwards;
 }
-@keyframes ha-bg-fade{from{opacity:0}to{opacity:.82}}
+.hero-artwork-dark{display:none}
+:root[data-home-theme="dark"] .hero-artwork-light{display:none}
+:root[data-home-theme="dark"] .hero-artwork-dark{display:block}
+@keyframes ha-bg-fade{from{opacity:0}to{opacity:var(--hero-bg-opacity)}}
 
-/* ── Readability gradient overlay ───────────────────────── */
+/* ── Readability gradient overlay (theme colour via --hero-overlay) ── */
 .readability-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(
-    to right,
-    rgba(5,11,22,.90) 0%,
-    rgba(5,11,22,.75) 35%,
-    rgba(5,11,22,.42) 56%,
-    rgba(5,11,22,.12) 72%,
-    transparent 88%
-  );
+  background:var(--hero-overlay);
   opacity:0;
   animation:ha-ov-fade var(--ov-dur) ease var(--ov-start) forwards;
 }
@@ -356,8 +362,8 @@ td:first-child{color:var(--t1);font-weight:500}
   left:0;right:0;height:1px;
   top:var(--y,50%);
   background:linear-gradient(to right,
-    transparent 0%,rgba(99,163,255,.24) 18%,
-    rgba(99,163,255,.24) 82%,transparent 100%);
+    transparent 0%,var(--cl-line) 18%,
+    var(--cl-line) 82%,transparent 100%);
   transform:scaleX(0);transform-origin:left center;
   animation:cl-ltr var(--cl-dur) var(--cl-ease) var(--cl-start) forwards;
   opacity:0;
@@ -372,8 +378,8 @@ td:first-child{color:var(--t1);font-weight:500}
   top:0;bottom:0;width:1px;
   left:var(--x,50%);
   background:linear-gradient(to bottom,
-    transparent 0%,rgba(99,163,255,.18) 18%,
-    rgba(99,163,255,.18) 82%,transparent 100%);
+    transparent 0%,var(--cl-line-soft) 18%,
+    var(--cl-line-soft) 82%,transparent 100%);
   transform:scaleY(0);transform-origin:center top;
   animation:cl-ttb var(--cl-dur) var(--cl-ease) calc(var(--cl-start) + .2s) forwards;
   opacity:0;
@@ -411,7 +417,7 @@ td:first-child{color:var(--t1);font-weight:500}
 
 /* ── Reduced motion: skip line/bg animation, show immediately ── */
 @media(prefers-reduced-motion:reduce){
-  .hero-artwork-bg{animation:none;opacity:.82}
+  .hero-artwork-bg{animation:none;opacity:var(--hero-bg-opacity)}
   .readability-overlay{animation:none;opacity:1}
   .cl-h,.cl-v{animation:none;opacity:0}
 }
@@ -425,24 +431,13 @@ td:first-child{color:var(--t1);font-weight:500}
 /* ── Keyframes ─────────────────────────────────────────── */
 @keyframes ha-fade{from{opacity:0}to{opacity:1}}
 @keyframes ha-rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes ha-draw{
-  /* Stage 3 (0–43% ≈ 0–1.2s):  bridge foundation — deliberate start
-     Stage 4 (43–79% ≈ 1.2–2.2s): towers, deck, cables — steady pace
-     Stage 5 (79–100% ≈ 2.2–2.8s): skyline + final details — gentle finish */
-  from{clip-path:inset(0 100% 0 0);opacity:1}
-  43%{clip-path:inset(0 60% 0 0)}
-  79%{clip-path:inset(0 15% 0 0)}
-  to{clip-path:inset(0 0% 0 0);opacity:1}
-}
 
-/* ── Initial hidden states (applied by JS stageInit) ───── */
+/* ── Initial hidden state (applied by JS stageInit) ─────── */
 .ha-hidden{opacity:0!important}
-.ha-hidden-illus{opacity:0!important;clip-path:inset(0 100% 0 0)!important}
 
 /* ── Stage animation classes (added per-element by JS) ─── */
 .ha-anim-fade{animation:ha-fade .5s cubic-bezier(.25,.46,.45,.94) forwards}
 .ha-anim-rise{animation:ha-rise .65s cubic-bezier(.25,.46,.45,.94) forwards}
-.ha-anim-draw{animation:ha-draw 2.8s cubic-bezier(.37,0,.63,1) forwards;opacity:1!important}
 /* Discipline card stagger — delay matches HeroAnim.T.CARD_STAGGER */
 .ha-card-1{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 0ms   forwards}
 .ha-card-2{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 80ms  forwards}
@@ -451,20 +446,18 @@ td:first-child{color:var(--t1);font-weight:500}
 .ha-card-5{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 320ms forwards}
 .ha-card-6{animation:ha-rise .5s cubic-bezier(.25,.46,.45,.94) 400ms forwards}
 
-/* ── Complete state: guarantee no lingering clip or hidden ─ */
+/* ── Complete state: guarantee nothing stays hidden ────── */
 .ha-complete .home-nav,
 .ha-complete .home-hero>div:first-child,
-.ha-complete .home-blueprint,
 .ha-complete .discipline-card{opacity:1!important;transform:none!important}
-.ha-complete .home-blueprint{clip-path:none!important}
 
 /* ── Reduced motion: skip all animation, show immediately ── */
 @media(prefers-reduced-motion:reduce){
-  .ha-hidden,.ha-hidden-illus,
-  .ha-anim-fade,.ha-anim-rise,.ha-anim-draw,
+  .ha-hidden,
+  .ha-anim-fade,.ha-anim-rise,
   .ha-card-1,.ha-card-2,.ha-card-3,.ha-card-4,.ha-card-5,.ha-card-6{
     animation:none!important;opacity:1!important;
-    transform:none!important;clip-path:none!important
+    transform:none!important
   }
 }
 </style>
@@ -473,7 +466,8 @@ td:first-child{color:var(--t1);font-weight:500}
 <div class="home-page on" id="home-page">
   <!-- Immersive bridge background — dark mode only, hidden from AT -->
   <div class="homepage-bg" aria-hidden="true">
-    <img class="hero-artwork-bg" src="assets/illustrations/hero-bridge-dark.svg" alt="">
+    <img class="hero-artwork-bg hero-artwork-light" src="assets/illustrations/hero-bridge-light.svg" alt="">
+    <img class="hero-artwork-bg hero-artwork-dark" src="assets/illustrations/hero-bridge-dark.svg" alt="">
     <div class="readability-overlay"></div>
     <div class="construction-lines">
       <!-- Horizontal lines: alternate L→R and R→L origins -->
@@ -1622,37 +1616,28 @@ function checkIncomingShareLink(){
 
 /* ═══════════════════════════════════════════════════════════
    HeroAnim — Homepage hero animation state machine
-   States: idle → logo → bridge* → content → cards → complete
+   States: idle → logo → content → cards → complete
 
-   Dark mode:  construction lines + full-page bridge background
-               are CSS-animated (.homepage-bg). JS handles nav,
-               hero text and card stagger only.
-   Light mode: bridge wipes in via clip-path on right-column
-               illustration (JS-driven). No background layer.
-
-   * bridge stage skipped in dark mode (handled by CSS).
+   One shared implementation for both themes. The immersive
+   background (bridge artwork, construction lines, readability
+   overlay) is entirely CSS-driven via theme variables on
+   .home-page — see "IMMERSIVE BACKGROUND LAYER" above. This
+   state machine only handles nav, hero text and card stagger,
+   which use identical timing regardless of theme.
    ═══════════════════════════════════════════════════════════ */
 const HeroAnim=(()=>{
-  /* ── Per-mode timing constants (ms) ─────────────────────── */
-  const T_DARK={
+  /* ── Timeline constants (ms), shared by light and dark mode ── */
+  const T={
     LOGO_START   :400,   // nav fades in alongside construction lines
     CONTENT_START:3400,  // hero text/headline/buttons rise in
     CARDS_START  :4000,  // discipline cards stagger in
     COMPLETE     :4800,  // cleanup
     CARD_STAGGER :80,
   };
-  const T_LIGHT={
-    LOGO_START   :500,
-    BRIDGE_START :1000,  // clip-path wipe on right-column illustration
-    CONTENT_START:4200,
-    CARDS_START  :4800,
-    COMPLETE     :5600,
-    CARD_STAGGER :80,
-  };
 
   let _state='idle';
   const _timers=[];
-  let _nav,_heroText,_illus,_cards,_isDark,T;
+  let _nav,_heroText,_cards;
 
   function _set(s){_state=s;}
   function _sched(fn,ms){_timers.push(setTimeout(fn,ms));}
@@ -1661,19 +1646,12 @@ const HeroAnim=(()=>{
   function _stageInit(){
     _set('idle');
     // nav + heroText already carry ha-hidden in HTML markup (blank first paint)
-    if(!_isDark)_illus.classList.add('ha-hidden-illus');
     _cards.forEach(c=>c.classList.add('ha-hidden'));
   }
   function _stageLogo(){
     _set('logo');
     _nav.classList.remove('ha-hidden');
     _nav.classList.add('ha-anim-fade');
-  }
-  function _stageBridge(){
-    // Light mode only: wipe in the right-column illustration
-    _set('bridge');
-    _illus.classList.remove('ha-hidden-illus');
-    _illus.classList.add('ha-anim-draw');
   }
   function _stageContent(){
     _set('content');
@@ -1690,7 +1668,6 @@ const HeroAnim=(()=>{
   function _stageComplete(){
     _set('complete');
     _nav.classList.remove('ha-anim-fade');
-    if(!_isDark)_illus.classList.remove('ha-anim-draw');
     _heroText.classList.remove('ha-anim-rise');
     _cards.forEach((c,i)=>c.classList.remove(`ha-card-${i+1}`));
     document.getElementById('home-page')?.classList.add('ha-complete');
@@ -1706,16 +1683,12 @@ const HeroAnim=(()=>{
   function run(){
     _nav     =document.querySelector('.home-nav');
     _heroText=document.querySelector('.home-hero > div:first-child');
-    _illus   =document.querySelector('.home-blueprint');
     _cards   =Array.from(document.querySelectorAll('.discipline-card'));
-    _isDark  =document.documentElement.dataset.homeTheme==='dark';
-    T        =_isDark?T_DARK:T_LIGHT;
 
     if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
 
     _stageInit();
     _sched(_stageLogo,    T.LOGO_START);
-    if(!_isDark)_sched(_stageBridge,T.BRIDGE_START);
     _sched(_stageContent, T.CONTENT_START);
     _sched(_stageCards,   T.CARDS_START);
     _sched(_stageComplete,T.COMPLETE);
