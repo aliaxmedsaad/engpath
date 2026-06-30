@@ -322,10 +322,21 @@ td:first-child{color:var(--t1);font-weight:500}
    background in both themes; keep the grid column for layout balance */
 .home-blueprint{visibility:hidden}
 
-/* ── Background container ───────────────────────────────── */
+/* ── Background container ───────────────────────────────────
+   Constrained to roughly nav + hero + first section height
+   (not the full page — object-fit:cover over the entire document
+   height would zoom the artwork into an unrecognizable crop).
+   A bottom fade blends it into the page background so later
+   sections feel like a continuous, unbroken page. ───────────── */
 .homepage-bg{
-  position:absolute;inset:0;z-index:0;
+  position:absolute;top:0;left:0;right:0;z-index:0;
+  height:clamp(820px,124vh,1320px);
   pointer-events:none;overflow:hidden;
+}
+.homepage-bg::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:38%;
+  background:linear-gradient(to bottom,transparent,var(--home-bg) 92%);
+  pointer-events:none;
 }
 
 /* ── Bridge artwork — light/dark asset toggled like .home-bridge-* ── */
