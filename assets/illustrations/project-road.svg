@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Expressway project blueprint</title>
+  <desc id="desc">Blueprint-style transport and expressway project visual.</desc>
+  <rect width="520" height="220" fill="#F2F1E8"/>
+  <path d="M34 178C144 120 214 92 486 58M54 202C170 136 250 104 502 76" stroke="#0F172A" stroke-opacity=".38" stroke-width="1.4"/>
+  <path d="M88 180c110-54 200-82 354-105" stroke="#0F172A" stroke-opacity=".18" stroke-dasharray="10 10"/>
+  <path d="M28 116h210M282 116h210M78 74h94M338 154h120M120 42v154M218 32v164M316 32v164M416 42v154" stroke="#0F172A" stroke-opacity=".14"/>
+  <path d="M54 156h48M134 134h48M220 112h48M310 92h48M404 74h48" stroke="#1D4ED8" stroke-opacity=".3"/>
+</svg>

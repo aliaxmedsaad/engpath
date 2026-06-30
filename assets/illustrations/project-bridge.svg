@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Bridge project blueprint</title>
+  <desc id="desc">Blueprint-style cable-stayed bridge project visual.</desc>
+  <rect width="520" height="220" fill="#EEF4F8"/>
+  <path d="M0 160H520M42 146H486M374 36v128M402 28v136M368 38l34-18 34 18v126h-68Z" stroke="#0F172A" stroke-opacity=".2"/>
+  <path d="M58 148c108-38 230-52 404-47M78 141h368M386 34 78 141M386 34 150 136M386 34 222 129M386 34 295 119M402 30 454 101M402 30 432 101" stroke="#0F172A" stroke-opacity=".42" stroke-width="1.4"/>
+  <path d="M76 142v22M146 136v24M222 129v27M294 120v30M370 105v38M454 102v34" stroke="#0F172A" stroke-opacity=".22"/>
+  <path d="M16 100h58v52H16zM32 78h26v22M444 76h42v84" stroke="#0F172A" stroke-opacity=".14"/>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Tower project blueprint</title>
+  <desc id="desc">Blueprint-style office tower project visual.</desc>
+  <rect width="520" height="220" fill="#F1F6FA"/>
+  <path d="M260 24 360 72v124H164V72L260 24Z" stroke="#0F172A" stroke-opacity=".42" stroke-width="1.4"/>
+  <path d="M190 84h144M190 112h144M190 140h144M190 168h144M214 60v136M238 48v148M262 36v160M286 48v148M310 60v136" stroke="#0F172A" stroke-opacity=".22"/>
+  <path d="M164 72 360 196M360 72 164 196" stroke="#0F172A" stroke-opacity=".12"/>
+  <path d="M78 196h370M102 176h70M356 176h62M64 132h60M400 116h74" stroke="#0F172A" stroke-opacity=".14"/>
+</svg>

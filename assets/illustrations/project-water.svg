@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Water treatment project blueprint</title>
+  <desc id="desc">Blueprint-style water treatment plant project visual.</desc>
+  <rect width="520" height="220" fill="#EAF6F8"/>
+  <ellipse cx="154" cy="110" rx="92" ry="42" stroke="#0F172A" stroke-opacity=".36" stroke-width="1.4"/>
+  <ellipse cx="154" cy="110" rx="58" ry="25" stroke="#0F172A" stroke-opacity=".18"/>
+  <ellipse cx="348" cy="112" rx="96" ry="44" stroke="#0F172A" stroke-opacity=".36" stroke-width="1.4"/>
+  <ellipse cx="348" cy="112" rx="60" ry="26" stroke="#0F172A" stroke-opacity=".18"/>
+  <path d="M54 162h410M246 110h12M154 68v84M348 68v88M68 74h386M88 184h340" stroke="#0F172A" stroke-opacity=".16"/>
+  <path d="M70 126c32 14 56 14 92 0s64-14 96 0 58 14 92 0 58-14 96 0" stroke="#1D4ED8" stroke-opacity=".36" stroke-width="1.3"/>
+</svg>
